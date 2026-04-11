@@ -1,0 +1,305 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import {
+  Share2, Copy, ExternalLink, MessageCircle, Send as SendIcon,
+  Mail, Smartphone, Check, Globe, AtSign, Hash, Link2,
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase'
+import { useAuth } from '@/hooks/useAuth'
+import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
+import Skeleton from '@/components/ui/Skeleton'
+import { cn, formatNumber, copyToClipboard } from '@/lib/utils'
+import { APP_DOMAIN } from '@/lib/constants'
+
+interface ShareStats {
+  total_shares: number
+  points_earned: number
+  today_shares: number
+}
+
+const PLATFORMS = [
+  {
+    id: 'whatsapp',
+    name: 'WhatsApp',
+    icon: MessageCircle,
+    color: '#25D366',
+    getUrl: (link: string, text: string) => `https://wa.me/?text=${encodeURIComponent(`${text} ${link}`)}`,
+  },
+  {
+    id: 'telegram',
+    name: 'Telegram',
+    icon: SendIcon,
+    color: '#0088cc',
+    getUrl: (link: string, text: string) => `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`,
+  },
+  {
+    id: 'twitter',
+    name: 'Twitter / X',
+    icon: AtSign,
+    color: '#1DA1F2',
+    getUrl: (link: string, text: string) => `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`,
+  },
+  {
+    id: 'facebook',
+    name: 'Facebook',
+    icon: Globe,
+    color: '#1877F2',
+    getUrl: (link: string) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`,
+  },
+  {
+    id: 'linkedin',
+    name: 'LinkedIn',
+    icon: Link2,
+    color: '#0A66C2',
+    getUrl: (link: string) => `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`,
+  },
+  {
+    id: 'email',
+    name: 'Email',
+    icon: Mail,
+    color: '#EA4335',
+    getUrl: (link: string, text: string) => `mailto:?subject=${encodeURIComponent('Decouvre VIDA')}&body=${encodeURIComponent(`${text}\n\n${link}`)}`,
+  },
+  {
+    id: 'sms',
+    name: 'SMS',
+    icon: Smartphone,
+    color: '#10b981',
+    getUrl: (link: string, text: string) => `sms:?body=${encodeURIComponent(`${text} ${link}`)}`,
+  },
+]
+
+export default function PartagePage() {
+  const { user, profile } = useAuth()
+  const [stats, setStats] = useState<ShareStats>({ total_shares: 0, points_earned: 0, today_shares: 0 })
+  const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
+  const supabase = createClient()
+
+  const shareLink = `https://${APP_DOMAIN}/share/${profile?.referral_code ?? ''}`
+  const shareText = 'VIDA — L agregateur multi-IA le plus complet. Chat, images, videos, code, agents... tout en un.'
+
+  const load = useCallback(async () => {
+    if (!user) return
+
+    const { data: shares } = await supabase
+      .from('social_shares')
+      .select('id, points_given, shared_at')
+      .eq('user_id', user.id)
+
+    if (shares) {
+      const today = new Date().toISOString().split('T')[0]
+      const todayShares = shares.filter(s => s.shared_at?.startsWith(today))
+      setStats({
+        total_shares: shares.length,
+        points_earned: shares.reduce((acc, s) => acc + (s.points_given ?? 0), 0),
+        today_shares: todayShares.length,
+      })
+    }
+    setLoading(false)
+  }, [user, supabase])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const handleCopy = async () => {
+    const ok = await copyToClipboard(shareLink)
+    if (ok) {
+      setCopied(true)
+      toast.success('Lien copie')
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const handleShare = async (platformId: string) => {
+    if (!user) return
+    if (stats.today_shares >= 3) {
+      toast.error('Maximum 3 partages par jour')
+      return
+    }
+
+    const platform = PLATFORMS.find(p => p.id === platformId)
+    if (!platform) return
+
+    // Track share
+    const points = stats.today_shares === 0 ? 400 : 300 // +100 bonus first share
+    await supabase.from('social_shares').insert({
+      user_id: user.id,
+      share_code: profile?.referral_code ?? '',
+      platform_hint: platformId,
+      points_given: points,
+    })
+
+    // Award points
+    await supabase.from('point_transactions').insert({
+      user_id: user.id,
+      amount: points,
+      type: 'partage',
+      description: `Partage ${platform.name} : +${points} points`,
+    })
+
+    setStats(prev => ({
+      total_shares: prev.total_shares + 1,
+      points_earned: prev.points_earned + points,
+      today_shares: prev.today_shares + 1,
+    }))
+
+    // Open share URL
+    const url = platform.getUrl(shareLink, shareText)
+    window.open(url, '_blank', 'noopener,noreferrer')
+    toast.success(`+${points} points`)
+  }
+
+  const handleNativeShare = async () => {
+    if (!navigator.share) {
+      handleCopy()
+      return
+    }
+    try {
+      await navigator.share({
+        title: 'VIDA',
+        text: shareText,
+        url: shareLink,
+      })
+
+      if (user && stats.today_shares < 3) {
+        const points = stats.today_shares === 0 ? 400 : 300
+        await supabase.from('social_shares').insert({
+          user_id: user.id,
+          share_code: profile?.referral_code ?? '',
+          platform_hint: 'native',
+          points_given: points,
+        })
+        await supabase.from('point_transactions').insert({
+          user_id: user.id,
+          amount: points,
+          type: 'partage',
+          description: `Partage natif : +${points} points`,
+        })
+        setStats(prev => ({
+          total_shares: prev.total_shares + 1,
+          points_earned: prev.points_earned + points,
+          today_shares: prev.today_shares + 1,
+        }))
+        toast.success(`+${points} points`)
+      }
+    } catch {
+      // User cancelled
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
+  }
+
+  const sharesLeft = Math.max(0, 3 - stats.today_shares)
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="flex items-center gap-3 text-2xl font-bold text-[var(--text-primary)]">
+          <Share2 className="h-7 w-7 text-[var(--cyan)]" />
+          Partage & Gagne
+        </h1>
+        <p className="mt-1 text-[var(--text-secondary)]">
+          Partage VIDA et gagne jusqu a 400 points par jour
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{formatNumber(stats.total_shares)}</p>
+          <p className="text-xs text-[var(--text-muted)]">Partages total</p>
+        </Card>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-[var(--cyan)]">{formatNumber(stats.points_earned)}</p>
+          <p className="text-xs text-[var(--text-muted)]">Points gagnes</p>
+        </Card>
+        <Card className="p-4 text-center">
+          <p className="text-2xl font-bold text-[var(--text-primary)]">
+            {sharesLeft}/3
+          </p>
+          <p className="text-xs text-[var(--text-muted)]">Partages restants aujourd hui</p>
+        </Card>
+      </div>
+
+      {/* Share link */}
+      <Card className="p-5">
+        <h2 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Ton lien de partage</h2>
+        <div className="flex gap-2">
+          <div className="flex flex-1 items-center rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5">
+            <code className="flex-1 truncate text-sm text-[var(--cyan)]">{shareLink}</code>
+          </div>
+          <Button onClick={handleCopy} variant="secondary" className="shrink-0">
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          </Button>
+          <Button onClick={handleNativeShare} className="shrink-0">
+            <Share2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </Card>
+
+      {/* Platforms */}
+      <Card className="p-5">
+        <h2 className="mb-4 text-sm font-semibold text-[var(--text-primary)]">Partager via</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {PLATFORMS.map((platform) => (
+            <button
+              key={platform.id}
+              onClick={() => handleShare(platform.id)}
+              disabled={sharesLeft === 0}
+              className={cn(
+                'flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 transition-all',
+                sharesLeft > 0
+                  ? 'hover:bg-white/[0.05] hover:border-white/10 cursor-pointer'
+                  : 'opacity-50 cursor-not-allowed'
+              )}
+            >
+              <platform.icon className="h-5 w-5 shrink-0" style={{ color: platform.color }} />
+              <span className="truncate text-sm text-[var(--text-primary)]">{platform.name}</span>
+            </button>
+          ))}
+        </div>
+        {sharesLeft === 0 && (
+          <p className="mt-3 text-center text-xs text-[var(--text-muted)]">
+            Tu as atteint la limite de 3 partages aujourd hui. Reviens demain !
+          </p>
+        )}
+      </Card>
+
+      {/* Rewards info */}
+      <Card className="p-5">
+        <h2 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Recompenses</h2>
+        <div className="space-y-2">
+          {[
+            { label: '1er partage du jour', value: '+400 points', badge: 'Bonus' },
+            { label: '2eme et 3eme partage', value: '+300 points chacun', badge: null },
+            { label: 'Ami inscrit via ton lien', value: '+500 points', badge: 'Super bonus' },
+            { label: 'Ami qui s abonne', value: '+300 points x2', badge: null },
+          ].map(({ label, value, badge }) => (
+            <div key={label} className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-[var(--text-primary)]">{label}</span>
+                {badge && <Badge variant="default">{badge}</Badge>}
+              </div>
+              <span className="text-sm font-bold text-[var(--cyan)]">{value}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  )
+}
