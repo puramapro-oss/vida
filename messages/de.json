@@ -65,14 +65,19 @@
     "settings": "Einstellungen",
     "admin": "Admin",
     "expandSidebar": "Seitenleiste erweitern",
-    "collapseSidebar": "Seitenleiste minimieren"
+    "collapseSidebar": "Seitenleiste minimieren",
+    "home": "Home"
   },
   "tabs": {
     "chat": "Chat",
     "tools": "Tools",
     "studio": "Studio",
     "market": "Markt",
-    "profile": "Profil"
+    "profile": "Profil",
+    "home": "Home",
+    "referral": "Referral",
+    "wallet": "Wallet",
+    "gift": "Gift"
   },
   "landing": {
     "heroTitle": "Alle KI-Tools.",

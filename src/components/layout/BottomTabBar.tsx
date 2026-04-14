@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { MessageSquare, Wrench, Film, Store, User } from 'lucide-react'
+import { Home, Users, Wallet, Gift, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TABS = [
-  { href: '/dashboard/chat', icon: MessageSquare, key: 'chat' },
-  { href: '/dashboard/tools', icon: Wrench, key: 'tools' },
-  { href: '/dashboard/studio', icon: Film, key: 'studio' },
-  { href: '/dashboard/marketplace', icon: Store, key: 'market' },
+  { href: '/dashboard', icon: Home, key: 'home' },
+  { href: '/dashboard/referral', icon: Users, key: 'referral' },
+  { href: '/dashboard/wallet', icon: Wallet, key: 'wallet' },
+  { href: '/dashboard/daily-gift', icon: Gift, key: 'gift' },
   { href: '/dashboard/profile', icon: User, key: 'profile' },
 ] as const
 
@@ -25,7 +25,7 @@ export default function BottomTabBar() {
       aria-label="Navigation principale"
     >
       {TABS.map(({ href, icon: Icon, key }) => {
-        const active = pathname === href || pathname.startsWith(href + '/')
+        const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'))
         return (
           <Link
             key={href}
@@ -34,13 +34,13 @@ export default function BottomTabBar() {
             className={cn(
               'flex flex-1 flex-col items-center justify-center gap-1 py-3 text-xs font-medium transition-all duration-200',
               active
-                ? 'text-[var(--cyan)]'
+                ? 'text-[var(--emerald)]'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             )}
           >
             <Icon className={cn(
               'h-5 w-5 transition-transform duration-200',
-              active && 'drop-shadow-[0_0_6px_var(--cyan)] scale-110'
+              active && 'drop-shadow-[0_0_6px_var(--emerald)] scale-110'
             )} />
             <span>{t(key)}</span>
           </Link>

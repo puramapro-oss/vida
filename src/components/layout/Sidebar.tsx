@@ -5,10 +5,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
-  MessageSquare, Wrench, Bot, Store, Zap, Film, Users,
-  BarChart3, Gamepad2, Plug, Settings, ChevronLeft, ChevronRight,
-  LogOut, Share2, Wallet, Trophy, Bell, BookOpen, Crown, User,
-  Gift, Ticket, Megaphone, Shield,
+  Home, Users, Wallet, Trophy, Ticket, Crown, Gift, Share2,
+  Megaphone, Bell, BookOpen, User, Settings,
+  ChevronLeft, ChevronRight, LogOut, Shield,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -16,25 +15,15 @@ import { SUPER_ADMIN_EMAIL } from '@/lib/constants'
 import LocaleSwitcher from '@/components/shared/LocaleSwitcher'
 
 const NAV_ITEMS = [
-  { href: '/dashboard/chat', icon: MessageSquare, key: 'chat' },
-  { href: '/dashboard/tools', icon: Wrench, key: 'tools' },
-  { href: '/dashboard/agents', icon: Bot, key: 'agents' },
-  { href: '/dashboard/marketplace', icon: Store, key: 'marketplace' },
-  { href: '/dashboard/automation', icon: Zap, key: 'automation' },
-  { href: '/dashboard/studio', icon: Film, key: 'studio' },
-  { href: '/dashboard/collab', icon: Users, key: 'collab' },
-  { href: '/dashboard/analytics', icon: BarChart3, key: 'analytics' },
-  { href: '/dashboard/xp', icon: Gamepad2, key: 'xp' },
-  { href: '/dashboard/achievements', icon: Trophy, key: 'achievements' },
+  { href: '/dashboard', icon: Home, key: 'home' },
+  { href: '/dashboard/referral', icon: Users, key: 'referral' },
+  { href: '/dashboard/wallet', icon: Wallet, key: 'wallet' },
   { href: '/dashboard/classement', icon: Crown, key: 'classement' },
-  { href: '/dashboard/daily-gift', icon: Gift, key: 'dailyGift' },
   { href: '/dashboard/concours', icon: Trophy, key: 'concours' },
   { href: '/dashboard/tirage', icon: Ticket, key: 'tirage' },
+  { href: '/dashboard/daily-gift', icon: Gift, key: 'dailyGift' },
   { href: '/dashboard/partage', icon: Share2, key: 'partage' },
-  { href: '/dashboard/referral', icon: Users, key: 'referral' },
   { href: '/dashboard/influenceur', icon: Megaphone, key: 'influenceur' },
-  { href: '/dashboard/wallet', icon: Wallet, key: 'wallet' },
-  { href: '/dashboard/api', icon: Plug, key: 'api' },
   { href: '/dashboard/notifications', icon: Bell, key: 'notifications' },
   { href: '/dashboard/guide', icon: BookOpen, key: 'guide' },
   { href: '/dashboard/profile', icon: User, key: 'profile' },
@@ -59,12 +48,11 @@ export default function Sidebar() {
         collapsed ? 'w-16' : 'w-60'
       )}
     >
-      {/* Logo */}
       <div className={cn('flex h-16 items-center border-b border-[var(--border)] px-4', collapsed ? 'justify-center' : 'justify-between')}>
         {!collapsed && (
-          <span className="gradient-text font-[family-name:var(--font-display)] text-xl font-bold">
+          <Link href="/dashboard" className="gradient-text font-[family-name:var(--font-display)] text-xl font-bold">
             VIDA
-          </span>
+          </Link>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -76,10 +64,9 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Navigation */}
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2 scrollbar-thin">
         {navItems.map(({ href, icon: Icon, key }) => {
-          const active = pathname === href || pathname.startsWith(href + '/')
+          const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'))
           return (
             <Link
               key={href}
@@ -89,24 +76,23 @@ export default function Sidebar() {
                 'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200',
                 collapsed ? 'justify-center' : '',
                 active
-                  ? 'bg-[var(--cyan)]/10 text-[var(--cyan)] shadow-[inset_0_0_0_1px_rgba(16,185,129,0.1)]'
+                  ? 'bg-[var(--emerald)]/10 text-[var(--emerald)] shadow-[inset_0_0_0_1px_rgba(16,185,129,0.15)]'
                   : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]'
               )}
               title={collapsed ? t(key) : undefined}
             >
-              <Icon className={cn('h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110', active && 'drop-shadow-[0_0_6px_var(--cyan)]')} />
+              <Icon className={cn('h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110', active && 'drop-shadow-[0_0_6px_var(--emerald)]')} />
               {!collapsed && <span className="truncate">{t(key)}</span>}
             </Link>
           )
         })}
       </nav>
 
-      {/* Locale switcher + User section */}
       <div className="border-t border-[var(--border)] p-3 space-y-2">
         {!collapsed && <LocaleSwitcher />}
         {!collapsed ? (
           <div className="flex items-center gap-3 rounded-xl p-2">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--cyan)] to-[var(--purple)] text-sm font-semibold text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--emerald)] to-[var(--sage)] text-sm font-semibold text-white">
               {getInitials(profile?.full_name ?? profile?.email ?? null)}
             </div>
             <div className="min-w-0 flex-1">
@@ -128,7 +114,7 @@ export default function Sidebar() {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--cyan)] to-[var(--purple)] text-sm font-semibold text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[var(--emerald)] to-[var(--sage)] text-sm font-semibold text-white">
               {getInitials(profile?.full_name ?? profile?.email ?? null)}
             </div>
             <button

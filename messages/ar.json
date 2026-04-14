@@ -65,14 +65,19 @@
     "settings": "الإعدادات",
     "admin": "الإدارة",
     "expandSidebar": "توسيع الشريط الجانبي",
-    "collapseSidebar": "طي الشريط الجانبي"
+    "collapseSidebar": "طي الشريط الجانبي",
+    "home": "Home"
   },
   "tabs": {
     "chat": "دردشة",
     "tools": "أدوات",
     "studio": "استوديو",
     "market": "السوق",
-    "profile": "الملف الشخصي"
+    "profile": "الملف الشخصي",
+    "home": "Home",
+    "referral": "Referral",
+    "wallet": "Wallet",
+    "gift": "Gift"
   },
   "landing": {
     "heroTitle": "جميع أدوات الذكاء الاصطناعي.",
