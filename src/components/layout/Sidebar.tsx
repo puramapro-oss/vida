@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
   Home, Users, Wallet, Trophy, Ticket, Crown, Gift, Share2,
-  Megaphone, Bell, BookOpen, User, Settings,
+  Megaphone, Bell, BookOpen, User, Settings, Wind, Heart,
   ChevronLeft, ChevronRight, LogOut, Shield,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
@@ -16,6 +16,8 @@ import LocaleSwitcher from '@/components/shared/LocaleSwitcher'
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: Home, key: 'home' },
+  { href: '/dashboard/breathe', icon: Wind, key: 'breathe' },
+  { href: '/dashboard/gratitude', icon: Heart, key: 'gratitude' },
   { href: '/dashboard/referral', icon: Users, key: 'referral' },
   { href: '/dashboard/wallet', icon: Wallet, key: 'wallet' },
   { href: '/dashboard/classement', icon: Crown, key: 'classement' },
