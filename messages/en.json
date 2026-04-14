@@ -65,14 +65,19 @@
     "settings": "Settings",
     "admin": "Admin",
     "expandSidebar": "Expand sidebar",
-    "collapseSidebar": "Collapse sidebar"
+    "collapseSidebar": "Collapse sidebar",
+    "home": "Home"
   },
   "tabs": {
     "chat": "Chat",
     "tools": "Tools",
     "studio": "Studio",
     "market": "Market",
-    "profile": "Profile"
+    "profile": "Profile",
+    "home": "Home",
+    "referral": "Referral",
+    "wallet": "Wallet",
+    "gift": "Gift"
   },
   "landing": {
     "heroTitle": "All AI tools.",

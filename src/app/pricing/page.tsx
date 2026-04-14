@@ -82,6 +82,28 @@ export default function PricingPage() {
         <ArrowLeft className="h-4 w-4" /> Retour
       </Link>
 
+      {/* Bandeau aides */}
+      <Link
+        href="/financer"
+        data-testid="pricing-financer-banner"
+        className="mx-auto mb-10 mt-4 flex max-w-3xl items-center justify-between gap-4 rounded-2xl border border-[var(--emerald)]/30 bg-gradient-to-r from-[var(--emerald)]/15 to-[var(--sage)]/10 px-5 py-4 text-left backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[var(--emerald)]/50 hover:shadow-[0_8px_32px_rgba(16,185,129,0.25)] sm:px-6"
+      >
+        <div className="flex items-center gap-3">
+          <Heart className="h-5 w-5 shrink-0 text-[var(--emerald)]" />
+          <div>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
+              La plupart de nos utilisateurs ne paient rien grâce aux aides
+            </p>
+            <p className="text-xs text-[var(--text-secondary)]">
+              Découvre les 45 aides auxquelles tu as droit en 60 secondes →
+            </p>
+          </div>
+        </div>
+        <span className="hidden shrink-0 rounded-xl bg-[var(--emerald)] px-3 py-1.5 text-xs font-semibold text-[#052e16] sm:inline-flex">
+          Voir
+        </span>
+      </Link>
+
       <div className="mx-auto max-w-5xl text-center">
         <div className="vida-chip mx-auto mb-6 inline-flex">
           <Leaf className="h-3.5 w-3.5" /> 14 jours offerts · sans engagement

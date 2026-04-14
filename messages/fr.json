@@ -40,8 +40,9 @@
     "credits": "credits"
   },
   "nav": {
+    "home": "Accueil",
     "chat": "Chat IA",
-    "tools": "Outils (47+)",
+    "tools": "Outils",
     "agents": "Mes Agents",
     "marketplace": "Marketplace",
     "automation": "Automatisation",
@@ -68,11 +69,15 @@
     "collapseSidebar": "Reduire la sidebar"
   },
   "tabs": {
+    "home": "Accueil",
+    "referral": "Parrainage",
+    "wallet": "Wallet",
+    "gift": "Coffre",
+    "profile": "Profil",
     "chat": "Chat",
     "tools": "Outils",
     "studio": "Studio",
-    "market": "Market",
-    "profile": "Profil"
+    "market": "Market"
   },
   "landing": {
     "heroTitle": "Tous les outils IA.",

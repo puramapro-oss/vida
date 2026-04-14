@@ -26,6 +26,14 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-xl: 28px;
+
+  /* VIDA alias (héritage template AKASHA → mappe sur palette emerald) */
+  --cyan: #10B981;
+  --purple: #047857;
+  --pink: #84cc16;
+  --color-accent: #10B981;
+  --color-secondary: #84cc16;
+  --accent-rgb: 16,185,129;
 }
 
 [data-theme='light'] {
@@ -41,6 +49,9 @@
   --text-muted: rgba(5,46,22,0.45);
   --border: rgba(5,46,22,0.1);
   --border-glow: rgba(5,150,105,0.35);
+  --cyan: #059669;
+  --purple: #065f46;
+  --pink: #65a30d;
 }
 
 [data-theme='light'] body {
