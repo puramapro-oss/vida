@@ -54,6 +54,11 @@ CREATE POLICY apps_own_write ON vida_sante.aide_applications FOR INSERT WITH CHE
 DROP POLICY IF EXISTS apps_own_update ON vida_sante.aide_applications;
 CREATE POLICY apps_own_update ON vida_sante.aide_applications FOR UPDATE USING (auth.uid() = user_id);
 
+-- GRANTs (service_role bypass RLS, anon/authenticated need explicit perms)
+GRANT USAGE ON SCHEMA vida_sante TO anon, authenticated, service_role;
+GRANT SELECT ON vida_sante.aides TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE ON vida_sante.aide_applications TO authenticated, service_role;
+
 -- === SEED 45 aides réelles ===
 INSERT INTO vida_sante.aides (slug, nom, type_aide, organisme, profil_eligible, montant_max, periodicite, url_officielle, description) VALUES
 -- Revenus (6)
