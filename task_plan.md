@@ -34,6 +34,20 @@
 - [x] vercel --prod → deployed dpl_FnbBARJoZ5516sNqMxmPrV25AFpF
 - [x] Domain vida.purama.dev added + HTTP 200
 
+### ✅ C2+C3 — AUDIT FIX (2026-04-14, commits 24b81d1 + preceding)
+- [x] C3.1 Sidebar+BottomTab : 10 liens morts supprimés, garde 13 routes existantes
+- [x] C3.2 CSS alias --cyan/--purple/--pink → --emerald/--sage (190 refs, 43 fichiers)
+- [x] C3.3 /page.tsx réécrit : landing VIDA wellness (hero manifeste + 3 piliers + pricing tease)
+- [x] C3.4 /dashboard/page.tsx réécrit : welcome + stats XP/Graines/Wallet/Streak + 9 quick actions
+- [x] i18n : nav.home + tabs.{home,referral,wallet,gift} ajoutés FR/EN/ES/DE/AR
+- [x] C2.1 migrations/002_financer.sql : table aides + aide_applications + RLS + GRANTs + 45 seeds
+- [x] C2.2 /financer wizard 4 étapes publique (pas d'auth) + PDF jsPDF
+- [x] C2.3 /api/financer/match (POST profil → aides + cumul estimé)
+- [x] C2.4 /pricing bandeau vert vers /financer
+- [x] middleware: /financer ajouté à PUBLIC_PATHS
+- [x] Deploy dpl_4vU92MjiJZfaaXJnUYpsvK4bAzgX → https://vida.purama.dev
+- [x] Smoke tests: /=200 /pricing=200 /financer=200 /aide=200 /login=200. API /match retourne 29 aides / 171k€ pour salarié+parent+locataire.
+
 ### ❌ P2 — Features core VIDA-specific (À FAIRE)
 - [ ] /app/page.tsx — Landing VIDA (hero nature + manifesto + cinématique 3-4s)
 - [ ] /dashboard/page.tsx — Dashboard vivant (nature bg + compteurs impact + action du jour)
