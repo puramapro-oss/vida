@@ -41,6 +41,10 @@
   },
   "nav": {
     "home": "Accueil",
+    "univers": "Mon Univers",
+    "carte": "Carte mondiale",
+    "rituels": "Rituels",
+    "communaute": "Communauté",
     "breathe": "Respirer",
     "gratitude": "Gratitude",
     "missions": "Missions",

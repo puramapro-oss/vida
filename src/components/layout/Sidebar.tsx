@@ -8,6 +8,7 @@ import {
   Home, Users, Wallet, Trophy, Ticket, Crown, Gift, Share2,
   Megaphone, Bell, BookOpen, User, Settings, Wind, Heart,
   MessageCircle, Target, ShoppingBag, HandHeart,
+  Sparkles, Globe, Calendar, MessageSquare,
   ChevronLeft, ChevronRight, LogOut, Shield,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
@@ -17,8 +18,12 @@ import LocaleSwitcher from '@/components/shared/LocaleSwitcher'
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: Home, key: 'home' },
+  { href: '/dashboard/univers', icon: Sparkles, key: 'univers' },
   { href: '/dashboard/chat', icon: MessageCircle, key: 'chat' },
   { href: '/dashboard/missions', icon: Target, key: 'missions' },
+  { href: '/dashboard/carte', icon: Globe, key: 'carte' },
+  { href: '/dashboard/rituels', icon: Calendar, key: 'rituels' },
+  { href: '/dashboard/communaute', icon: MessageSquare, key: 'communaute' },
   { href: '/dashboard/breathe', icon: Wind, key: 'breathe' },
   { href: '/dashboard/gratitude', icon: Heart, key: 'gratitude' },
   { href: '/dashboard/boutique', icon: ShoppingBag, key: 'boutique' },

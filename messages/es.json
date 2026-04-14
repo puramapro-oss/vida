@@ -71,7 +71,11 @@
     "gratitude": "Gratitude",
     "missions": "Missions",
     "boutique": "Shop",
-    "dons": "Donate"
+    "dons": "Donate",
+    "univers": "My Universe",
+    "carte": "World map",
+    "rituels": "Rituals",
+    "communaute": "Community"
   },
   "tabs": {
     "chat": "Chat",
