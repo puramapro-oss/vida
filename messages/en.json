@@ -66,7 +66,9 @@
     "admin": "Admin",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
-    "home": "Home"
+    "home": "Home",
+    "breathe": "Breathe",
+    "gratitude": "Gratitude"
   },
   "tabs": {
     "chat": "Chat",

@@ -1,6 +1,7 @@
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import BottomTabBar from '@/components/layout/BottomTabBar'
+import SpiritualLayer, { WisdomFooter } from '@/components/shared/SpiritualLayer'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,8 +12,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="min-h-[calc(100vh-4rem)] p-4 pb-20 lg:p-8 lg:pb-8">
           {children}
         </main>
+        <WisdomFooter />
       </div>
       <BottomTabBar />
+      <SpiritualLayer />
     </div>
   )
 }

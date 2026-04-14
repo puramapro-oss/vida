@@ -41,6 +41,8 @@
   },
   "nav": {
     "home": "Accueil",
+    "breathe": "Respirer",
+    "gratitude": "Gratitude",
     "chat": "Chat IA",
     "tools": "Outils",
     "agents": "Mes Agents",

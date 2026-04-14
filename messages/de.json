@@ -66,7 +66,9 @@
     "admin": "Admin",
     "expandSidebar": "Seitenleiste erweitern",
     "collapseSidebar": "Seitenleiste minimieren",
-    "home": "Home"
+    "home": "Home",
+    "breathe": "Breathe",
+    "gratitude": "Gratitude"
   },
   "tabs": {
     "chat": "Chat",
