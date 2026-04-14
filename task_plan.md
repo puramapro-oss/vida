@@ -48,6 +48,29 @@
 - [x] Deploy dpl_4vU92MjiJZfaaXJnUYpsvK4bAzgX → https://vida.purama.dev
 - [x] Smoke tests: /=200 /pricing=200 /financer=200 /aide=200 /login=200. API /match retourne 29 aides / 171k€ pour salarié+parent+locataire.
 
+### ✅ C1 — Spiritual Layer (2026-04-14)
+- [x] migrations/003_spiritual.sql : tables affirmations (60 FR+EN), gratitude_entries, intentions, breath_sessions, awakening_events + cols profiles awakening_level/xp/affirmations_seen + RLS + GRANTs
+- [x] lib/awakening.ts : levels (Éveillé→Unifié), XP map, 12 WISDOM_QUOTES, MICRO_TEXTS, localStorage guard 8h
+- [x] SpiritualLayer + WisdomFooter (injectés layout dashboard)
+- [x] /dashboard/breathe (4-7-8 cercle animé + DB save)
+- [x] /dashboard/gratitude (journal 3/j + moods + +100 XP)
+- [x] APIs /api/spiritual/{affirmation,track,breath,gratitude}
+
+### ✅ C4 — Pages core VIDA (2026-04-14)
+- [x] /dashboard/chat : UI plein écran, streaming /api/chat, 4 starters VIDA
+- [x] /dashboard/missions : 15 missions DB + filtres (all/paid/ecology/health/community/human) + badge rémunéré
+- [x] /dashboard/boutique : 5 produits DB + cashback Graines + gradients/cat
+- [x] /dashboard/dons : wizard (3 destinations, 5 presets, message, anonymat) — prêt Stripe Checkout
+
+### ✅ C6 — i18n 16/16 locales (fallback EN pour 11 nouvelles, à traduire natif en P5)
+
+### ❌ RESTE
+- C5 polish wording VIDA sur pages héritées (referral, wallet, classement, concours, tirage, daily-gift, partage, influenceur, notifications, guide, profile, settings)
+- C7 QA : Playwright E2E + Lighthouse >90 + test humain 23 points
+- P2 pages core restantes : /dashboard/{univers (Fil de Vie), carte (Leaflet mondiale), rituels (weekly), communaute (buddies + love wall)}
+- P4 Admin (/admin/*) + i18n natif
+- P7 Mobile Expo + P8 Watch
+
 ### ❌ P2 — Features core VIDA-specific (À FAIRE)
 - [ ] /app/page.tsx — Landing VIDA (hero nature + manifesto + cinématique 3-4s)
 - [ ] /dashboard/page.tsx — Dashboard vivant (nature bg + compteurs impact + action du jour)
