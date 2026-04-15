@@ -131,7 +131,31 @@ export default function CGU() {
 
           <section>
             <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-[var(--text-primary)] mb-4">
-              8. Contact
+              8. Prime de bienvenue et droit de rétractation
+            </h2>
+            <p className="mb-3">
+              En choisissant un accès immédiat à son abonnement Purama, l&apos;utilisateur
+              reconnaît et accepte expressément, conformément à l&apos;article L221-28 3° du
+              Code de la consommation, que l&apos;exécution immédiate du service numérique
+              entraîne la renonciation à son droit de rétractation de 14 jours.
+            </p>
+            <p className="mb-3">
+              La prime de bienvenue est versée sous forme de crédits sur le wallet Purama de
+              l&apos;utilisateur, en trois tranches mensuelles à compter de la date de
+              souscription (J+0 : 25 €, M+1 : 25 €, M+2 : 50 €). Ces crédits ne sont
+              disponibles au retrait qu&apos;après 30 jours calendaires consécutifs
+              d&apos;abonnement actif.
+            </p>
+            <p>
+              En cas d&apos;annulation de l&apos;abonnement dans les 30 premiers jours,
+              PURAMA se réserve le droit de déduire le montant des tranches de prime déjà
+              versées de tout remboursement éventuellement accordé à titre commercial.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold text-[var(--text-primary)] mb-4">
+              9. Contact
             </h2>
             <p>
               Pour toute question relative aux présentes CGU : <a href="mailto:matiss.frasne@gmail.com" className="text-[var(--cyan)] hover:underline">matiss.frasne@gmail.com</a>

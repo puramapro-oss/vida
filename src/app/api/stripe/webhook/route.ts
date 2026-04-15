@@ -88,6 +88,37 @@ export async function POST(req: NextRequest) {
         } else if (customerId) {
           await updateProfileByCustomer(customerId, updateData)
         }
+
+        // V6 §10 — Prime tranches (phase1: J+0 25€, M+1 25€, M+2 50€)
+        if (userId && subscriptionId) {
+          const { data: subRow } = await db
+            .from('subscriptions')
+            .select('id')
+            .eq('stripe_subscription_id', subscriptionId)
+            .maybeSingle()
+
+          const now = new Date()
+          const tranches = [
+            { tranche: 1, amount_cents: 2500, scheduled_for: now.toISOString() },
+            { tranche: 2, amount_cents: 2500, scheduled_for: new Date(now.getTime() + 30 * 86400000).toISOString() },
+            { tranche: 3, amount_cents: 5000, scheduled_for: new Date(now.getTime() + 60 * 86400000).toISOString() },
+          ]
+          await db.from('prime_payouts').upsert(
+            tranches.map(t => ({ user_id: userId, subscription_id: subRow?.id ?? null, ...t })),
+            { onConflict: 'user_id,subscription_id,tranche' }
+          )
+
+          // Credit tranche 1 immediately to wallet (points mode: 1pt=0.01€ → 2500 points for 25€)
+          const { data: wallet } = await db.from('wallets').select('balance_cents, balance_points').eq('user_id', userId).maybeSingle()
+          if (wallet) {
+            await db.from('wallets').update({
+              balance_cents: (wallet.balance_cents ?? 0) + 2500,
+              balance_points: (wallet.balance_points ?? 0) + 2500,
+            }).eq('user_id', userId)
+          }
+          await db.from('prime_payouts').update({ paid: true, paid_at: now.toISOString() })
+            .eq('user_id', userId).eq('tranche', 1)
+        }
         break
       }
 
@@ -163,6 +194,61 @@ export async function POST(req: NextRequest) {
           const assoCents = Math.floor(amountCents * ASSO_PERCENTAGE / 100)
           await distributeToPool('reward', rewardCents, 'ca_10pct', invoice.id ?? '')
           await distributeToPool('asso', assoCents, 'ca_10pct', invoice.id ?? '')
+        }
+        break
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice
+        const customerId = invoice.customer as string
+        const { data: profile } = await db.from('profiles').select('id').eq('stripe_customer_id', customerId).single()
+        if (profile?.id) {
+          await db.from('transactions').insert({
+            user_id: profile.id,
+            type: 'subscription',
+            direction: 'in',
+            amount_cents: invoice.amount_due ?? 0,
+            currency: invoice.currency?.toUpperCase() ?? 'EUR',
+            status: 'failed',
+            stripe_invoice_id: invoice.id,
+          })
+          await updateProfileById(profile.id, { subscription_status: 'past_due' })
+        }
+        break
+      }
+
+      case 'charge.refunded': {
+        const charge = event.data.object as Stripe.Charge
+        const customerId = charge.customer as string
+        if (typeof customerId === 'string') {
+          const { data: profile } = await db.from('profiles').select('id, subscription_started_at').eq('stripe_customer_id', customerId).single()
+          if (profile?.id) {
+            const startedAt = profile.subscription_started_at ? new Date(profile.subscription_started_at) : null
+            const within30 = startedAt && (Date.now() - startedAt.getTime() < 30 * 86400000)
+            // Clawback unpaid prime tranches + deduct paid ones if refund within 30 days
+            const { data: paidTranches } = await db.from('prime_payouts')
+              .select('id, amount_cents, paid')
+              .eq('user_id', profile.id)
+            let primeDeducted = 0
+            for (const t of paidTranches ?? []) {
+              if (t.paid && within30) primeDeducted += t.amount_cents
+              await db.from('prime_payouts').update({ clawed_back: true }).eq('id', t.id)
+            }
+            await db.from('retractions').insert({
+              user_id: profile.id,
+              app_id: 'vida',
+              amount_refunded_cents: charge.amount_refunded ?? 0,
+              prime_deducted_cents: primeDeducted,
+              processed: true,
+              processed_at: new Date().toISOString(),
+              reason: charge.refunds?.data?.[0]?.reason ?? null,
+            })
+            await updateProfileById(profile.id, {
+              subscription_status: 'canceled',
+              plan: 'free',
+              subscription_canceled_at: new Date().toISOString(),
+            })
+          }
         }
         break
       }
