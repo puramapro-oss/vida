@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
         trial_period_days: 14,
         metadata: { user_id: user.id, plan: 'premium', period },
       },
-      success_url: `${origin}/dashboard?checkout=success`,
+      success_url: `${origin}/confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/pricing?checkout=cancelled`,
       metadata: { user_id: user.id, plan: 'premium', period },
     })
