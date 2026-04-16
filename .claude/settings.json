@@ -2,8 +2,11 @@
   "permissions": {
     "allow": ["Bash(*)", "Read(*)", "Write(*)", "Edit(*)"]
   },
-  "model": "opus",
-  "effort": "high",
+  "model": "claude-sonnet-4-6",
+  "thinking": { "enabled": true, "budget": 10000 },
+  "outputStyle": "explanatory",
+  "autoCompact": true,
+  "env": { "MAX_THINKING_TOKENS": "10000" },
   "hooks": {
     "SessionStart": [
       {
