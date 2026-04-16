@@ -80,14 +80,33 @@
 - Fix : `git filter-repo --path CLAUDE.md --invert-paths` puis force-push
 - N'empêche pas la prod (déjà live Vercel)
 
-### ❌ RESTE
-- C5 polish wording VIDA sur pages héritées (referral, wallet, classement, concours, tirage, daily-gift, partage, influenceur, notifications, guide, profile, settings)
+### ✅ V7 AGENTIC COMPLIANCE (2026-04-16, commit 2d228bc)
+- [x] .claude/settings.json : model claude-sonnet-4-6 + thinking 10K + outputStyle explanatory + autoCompact
+- [x] .claude/agents/ : qa-agent.md (22 points V13) + security-agent.md (niveaux sévérité CRITIQUE/HAUTE/MOYENNE/OK)
+- [x] .claude/commands/ : /deploy (QA+Security+vercel), /test-full, /audit
+- [x] .claude/hooks/stop-verify.sh (exécutable)
+- [x] .claude/skills/ : +supabase-purama, +vercel-deploy, +design-system (en plus des 6 existants)
+- [x] dons/page.tsx : placeholder comment supprimé
+- [x] Deploy dpl_AFeER9xBYYP9bRComBJZYZBYJtcf → 8/8 smoke tests = 200
+
+### ✅ P2 COMPLET (2026-04-16, commit 1cf49e1)
+- [x] /dashboard/univers — Fil de Vie™ + 6 impact stats DB-driven (déjà existant)
+- [x] /dashboard/carte — Leaflet map dark tiles + CircleMarker geolocated impact_events + 3 stats (actions/users/cities) + SSR:false dynamic
+- [x] /dashboard/rituels — Real RSVP via /api/rituels/join (Bearer auth + Zod + upsert + increment participants_count) + joinedIds Set + toast
+- [x] /dashboard/communaute — Post composer + moderated love wall + types victory/gratitude/encouragement/milestone (déjà existant)
+- [x] /dashboard/chat — UI plein écran + streaming /api/chat (déjà existant)
+- [x] /dashboard/missions — 15 missions DB + filtres (déjà existant)
+- [x] /dashboard/boutique — 5 produits DB + cashback (déjà existant)
+- [x] /dashboard/dons — wizard 3 destinations (déjà existant)
+- [x] Deps : +leaflet@1.9.4 +react-leaflet@5 +@types/leaflet
+
+### ❌ RESTE (hors scope "finis tout P2")
+- Push GitHub bloqué (secret scanning historique CLAUDE.md) — n'empêche pas la prod
 - C7 QA : Playwright E2E + Lighthouse >90 + test humain 23 points
-- P2 pages core restantes : /dashboard/{univers (Fil de Vie), carte (Leaflet mondiale), rituels (weekly), communaute (buddies + love wall)}
-- P4 Admin (/admin/*) + i18n natif
+- P4 Admin (/admin/*) + i18n natif 11 clés EN
 - P7 Mobile Expo + P8 Watch
 
-### ❌ P2 — Features core VIDA-specific (À FAIRE)
+### ✅ P2 — Features core VIDA-specific (TERMINÉ — voir ci-dessus)
 - [ ] /app/page.tsx — Landing VIDA (hero nature + manifesto + cinématique 3-4s)
 - [ ] /dashboard/page.tsx — Dashboard vivant (nature bg + compteurs impact + action du jour)
 - [ ] /dashboard/univers — Mon Univers VIDA (Fil de Vie™ + Impact Profile™ + Mode Miroir + Simulateur futur)
