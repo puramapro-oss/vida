@@ -13,6 +13,10 @@ import EmptyState from '@/components/ui/EmptyState'
 import { formatDate, formatPrice } from '@/lib/utils'
 import { WALLET_MIN_WITHDRAWAL } from '@/lib/constants'
 
+// V7 §27 — Phase 1 = points only. Withdrawals live in Phase 2 (post-Treezor).
+const PURAMA_PHASE = (process.env.NEXT_PUBLIC_PURAMA_PHASE ?? '1') === '2' ? 2 : 1
+const WITHDRAWAL_AVAILABLE = process.env.NEXT_PUBLIC_WITHDRAWAL_AVAILABLE === 'true'
+
 interface WalletData {
   balance: number
   total_earned: number
@@ -52,6 +56,10 @@ export default function WalletPage() {
   }, [user, supabase])
 
   const handleWithdraw = async () => {
+    if (PURAMA_PHASE === 1 || !WITHDRAWAL_AVAILABLE) {
+      toast.error('Retrait IBAN bientôt disponible — Purama Card en route.')
+      return
+    }
     const amount = parseFloat(withdrawAmount)
     if (!amount || amount < WALLET_MIN_WITHDRAWAL) {
       toast.error(`Montant minimum : ${WALLET_MIN_WITHDRAWAL} EUR`)
@@ -128,14 +136,21 @@ export default function WalletPage() {
             </div>
           </div>
         </Card>
-        <Card className="p-6 flex items-center justify-center">
+        <Card className="p-6 flex flex-col items-center justify-center gap-2">
           <Button
             onClick={() => setShowWithdraw(!showWithdraw)}
             icon={<CreditCard className="h-4 w-4" />}
-            disabled={!wallet || wallet.balance < WALLET_MIN_WITHDRAWAL}
+            disabled={PURAMA_PHASE === 1 || !WITHDRAWAL_AVAILABLE || !wallet || wallet.balance < WALLET_MIN_WITHDRAWAL}
           >
-            Retirer (min {WALLET_MIN_WITHDRAWAL} EUR)
+            {PURAMA_PHASE === 1 || !WITHDRAWAL_AVAILABLE
+              ? 'Retrait — bientôt disponible'
+              : `Retirer (min ${WALLET_MIN_WITHDRAWAL} EUR)`}
           </Button>
+          {PURAMA_PHASE === 1 && (
+            <p className="text-[10px] text-[var(--text-muted)] text-center max-w-[180px]">
+              Tes 100 € t&apos;attendent. La Purama Card arrive bientôt.
+            </p>
+          )}
         </Card>
       </div>
 

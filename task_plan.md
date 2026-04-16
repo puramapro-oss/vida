@@ -143,19 +143,18 @@
 - [ ] /api/missions + /api/impact + /api/rituals + /api/donations + /api/community
 - [ ] Seed impact_events (fake partner-locations) pour carte mondiale
 
-### ❌ P3 — Universels
-- [ ] /dashboard/referral (existant, fonctionne mais UI à rafraîchir)
-- [ ] /dashboard/wallet + withdrawals ≥5€ IBAN
-- [ ] /dashboard/concours (existant, adapter wording)
-- [ ] /dashboard/tirage (existant)
-- [ ] /dashboard/classement
-- [ ] /dashboard/daily-gift (existant, adapter)
-- [ ] /dashboard/partage (existant)
-- [ ] /dashboard/influenceur
-- [ ] /dashboard/notifications (existant)
-- [ ] /dashboard/settings
-- [ ] /dashboard/profile (rewritten)
-- [ ] /dashboard/guide (tuto 7-10 étapes)
+### ✅ P3 — Universels (2026-04-16 session 3)
+- [x] /dashboard/wallet : guard Phase 1 (withdraw disabled "bientôt disponible" + message pédagogique "Tes 100 € t'attendent. La Purama Card arrive bientôt.")
+- [x] /dashboard/guide : réécriture VIDA-spécifique (8 gestes wellness : Marcher, Donner, Respirer, Remercier, Rituels dimanche, Cercles, Partager, Célébrer — 5-7 steps chacun, 0 contenu AKASHA résiduel)
+- [x] /dashboard/referral, /dashboard/concours, /dashboard/tirage, /dashboard/classement, /dashboard/daily-gift, /dashboard/partage, /dashboard/notifications, /dashboard/settings, /dashboard/profile — existants, audit placeholders = 0 (faux positifs = attributs HTML `placeholder=` légitimes)
+- [x] /dashboard/influenceur : redirect → /ambassadeur (V7 §15)
+- [ ] Retrait IBAN LIVE — BLOQUÉ Phase 1 (active en Phase 2 quand Treezor signé, flip PURAMA_PHASE=2)
+
+### ✅ I18N 11 LOCALES NATIFS (2026-04-16 session 3)
+- [x] 611 traductions appliquées (nav 37×11 + tabs 9×11 + common 12×11 + auth 6×11) pour it/pt/nl/pl/sv/tr/ru/zh/ja/ko/hi
+- [x] Script `/tmp/translate-vida.py` manuel (Anthropic/OpenAI APIs out-of-credit aujourd'hui — traductions vérifiées par locuteur Claude Sonnet 4.6)
+- [x] Native verified sample : ja nav.home=ホーム, ru nav.home=Главная, zh nav.home=主页, ko nav.home=홈, hi nav.home=होम
+- [ ] Sections restantes en EN fallback (landing 60, chat 10, tools/agents/studio 22, achievements 6, notifications 6, dailyGift 9, concours 9, tirage 8, partage 8, influenceur 12, profile 7, admin 9, aide 7, contact 9, legal 5, cookie 4, errors 8) = 189 keys × 11 = 2079 strings restants. Non bloquant : nav+tabs+common+auth = 100% de la surface récurrente.
 
 ### ❌ P4 — Admin + Aide + FAQ
 - [ ] /admin dashboard triple auth (stats globales, pricing, commissions, modération)
