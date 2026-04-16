@@ -31,17 +31,72 @@ const DEFAULT_THEMES = [
 export default function RituelsPage() {
   const [rituals, setRituals] = useState<Ritual[]>([])
   const [loading, setLoading] = useState(true)
+  const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
+  const [joining, setJoining] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase
-      .from('weekly_rituals')
-      .select('*')
-      .order('scheduled_at', { ascending: true })
-      .limit(12)
-      .then(({ data }) => setRituals((data ?? []) as Ritual[]))
-      .then(() => setLoading(false))
+    ;(async () => {
+      try {
+        const { data: rData } = await supabase
+          .from('weekly_rituals')
+          .select('*')
+          .order('scheduled_at', { ascending: true })
+          .limit(12)
+        setRituals((rData ?? []) as Ritual[])
+
+        const { data: userData } = await supabase.auth.getUser()
+        if (userData.user) {
+          const { data: jData } = await supabase
+            .from('user_ritual_participations')
+            .select('ritual_id')
+            .eq('user_id', userData.user.id)
+          setJoinedIds(new Set(((jData ?? []) as { ritual_id: string }[]).map(x => x.ritual_id)))
+        }
+      } finally {
+        setLoading(false)
+      }
+    })()
   }, [])
+
+  const handleJoin = async (ritualId: string) => {
+    setJoining(ritualId)
+    setToast(null)
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setToast('Connecte-toi pour rejoindre un rituel.')
+        return
+      }
+      const res = await fetch('/api/rituels/join', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ ritualId }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setToast(json.error ?? 'Inscription impossible.')
+        return
+      }
+      setJoinedIds(prev => new Set(prev).add(ritualId))
+      setRituals(prev =>
+        prev.map(r =>
+          r.id === ritualId ? { ...r, participants_count: json.participants_count ?? (r.participants_count ?? 0) + 1 } : r,
+        ),
+      )
+      setToast('Tu es inscrit·e. Une notification te rappellera l\'instant venu.')
+    } catch {
+      setToast('Connexion instable. Réessaie dans un instant.')
+    } finally {
+      setJoining(null)
+      setTimeout(() => setToast(null), 4000)
+    }
+  }
 
   const upcoming = rituals.filter(r => r.status === 'upcoming' || new Date(r.scheduled_at) > new Date())
   const nextRitual = upcoming[0]
@@ -90,11 +145,21 @@ export default function RituelsPage() {
             </div>
             <button
               data-testid="ritual-join"
-              className="mt-6 rounded-2xl bg-gradient-to-r from-[var(--emerald)] to-[var(--sage)] px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:-translate-y-0.5 transition-all"
-              onClick={() => alert('Bientôt : inscription + lien visio live pour rejoindre le rituel.')}
+              disabled={joining === nextRitual.id || joinedIds.has(nextRitual.id)}
+              className="mt-6 rounded-2xl bg-gradient-to-r from-[var(--emerald)] to-[var(--sage)] px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              onClick={() => handleJoin(nextRitual.id)}
             >
-              Je me joins au rituel
+              {joinedIds.has(nextRitual.id)
+                ? '✓ Tu es inscrit·e'
+                : joining === nextRitual.id
+                ? 'Inscription…'
+                : 'Je me joins au rituel'}
             </button>
+            {toast && (
+              <p className="mt-3 text-sm text-[var(--emerald)] bg-[var(--emerald)]/10 border border-[var(--emerald)]/20 rounded-xl px-4 py-2 inline-block">
+                {toast}
+              </p>
+            )}
           </div>
         </motion.section>
       )}
