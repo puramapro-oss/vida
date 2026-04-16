@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import Skeleton from '@/components/ui/Skeleton'
+import HomepageBlocks from '@/components/dashboard/HomepageBlocks'
 
 const stagger = {
   hidden: {},
@@ -27,12 +28,12 @@ const QUICK = [
   { href: '/dashboard/concours', icon: Trophy, label: 'Concours', desc: '10 gagnants chaque semaine' },
   { href: '/dashboard/tirage', icon: Ticket, label: 'Tirage mensuel', desc: 'Tes tickets de l\'abondance' },
   { href: '/dashboard/partage', icon: Share2, label: 'Partager', desc: 'Transmets VIDA à quelqu\'un' },
-  { href: '/dashboard/influenceur', icon: Megaphone, label: 'Influenceur', desc: 'Deviens ambassadeur VIDA' },
+  { href: '/ambassadeur', icon: Megaphone, label: 'Ambassadeur', desc: 'Jusqu\'à 200 k€ en semant VIDA' },
   { href: '/dashboard/guide', icon: BookOpen, label: 'Guide', desc: 'Découvre l\'écosystème VIDA' },
 ]
 
 export default function DashboardPage() {
-  const { profile, loading } = useAuth()
+  const { user, profile, loading } = useAuth()
 
   if (loading) {
     return (
@@ -93,6 +94,17 @@ export default function DashboardPage() {
           </div>
         </div>
       </motion.header>
+
+      {/* V7 — 3 blocs above the fold : Parrainage + Ambassadeur + Cross-promo */}
+      <HomepageBlocks
+        user={user}
+        profile={profile ? {
+          id: profile.id,
+          referral_code: profile.referral_code ?? null,
+          full_name: profile.full_name ?? null,
+          pseudo: profile.pseudo ?? null,
+        } : null}
+      />
 
       {/* Stats */}
       <motion.section variants={fadeUp} className="grid grid-cols-2 gap-3 lg:grid-cols-4">

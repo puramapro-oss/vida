@@ -89,6 +89,45 @@ export async function POST(req: NextRequest) {
           await updateProfileByCustomer(customerId, updateData)
         }
 
+        // V7 §15 — cross-promo conversion tracking
+        const crossPromoSource = session.metadata?.cross_promo_source
+        const crossPromoCoupon = session.metadata?.coupon
+        if (userId && crossPromoSource && crossPromoCoupon) {
+          try {
+            const { data: existing } = await db
+              .from('cross_promos')
+              .select('id')
+              .eq('source_app', crossPromoSource)
+              .eq('user_id', userId)
+              .eq('converted', false)
+              .order('clicked_at', { ascending: false })
+              .limit(1)
+              .maybeSingle()
+
+            const now = new Date().toISOString()
+            if (existing?.id) {
+              await db.from('cross_promos').update({
+                converted: true,
+                converted_at: now,
+                coupon_used: crossPromoCoupon,
+                session_id: session.id,
+              }).eq('id', existing.id)
+            } else {
+              await db.from('cross_promos').insert({
+                source_app: crossPromoSource,
+                target_app: 'vida',
+                user_id: userId,
+                coupon_used: crossPromoCoupon,
+                session_id: session.id,
+                converted: true,
+                converted_at: now,
+              })
+            }
+          } catch {
+            // non-blocking
+          }
+        }
+
         // V6 §10 — Prime tranches (phase1: J+0 25€, M+1 25€, M+2 50€)
         if (userId && subscriptionId) {
           const { data: subRow } = await db

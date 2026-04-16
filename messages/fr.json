@@ -75,7 +75,8 @@
     "settings": "Parametres",
     "admin": "Admin",
     "expandSidebar": "Agrandir la sidebar",
-    "collapseSidebar": "Reduire la sidebar"
+    "collapseSidebar": "Reduire la sidebar",
+    "ambassadeur": "Ambassadeur"
   },
   "tabs": {
     "home": "Accueil",

@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import type Stripe from 'stripe'
 import { getStripe } from '@/lib/stripe'
 import { getPriceId } from '@/lib/stripe-prices'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createServiceClient } from '@/lib/supabase'
+
+type PuramaPromo = { coupon?: string; source?: string; expires?: number }
+
+function readPuramaPromo(req: NextRequest): PuramaPromo | null {
+  const raw = req.cookies.get('purama_promo')?.value
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(decodeURIComponent(raw)) as PuramaPromo
+    if (parsed.expires && parsed.expires < Date.now()) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
 
 const CheckoutSchema = z.object({
   period: z.enum(['month', 'year']),
@@ -60,11 +75,15 @@ export async function POST(req: NextRequest) {
 
     const origin = req.headers.get('origin') ?? 'https://vida.purama.dev'
 
-    const session = await stripe.checkout.sessions.create({
+    const promo = readPuramaPromo(req)
+    const forcedCoupon = promo?.coupon && /^[A-Z0-9_-]{3,32}$/i.test(promo.coupon)
+      ? promo.coupon.toUpperCase()
+      : null
+
+    const params: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
-      allow_promotion_codes: true,
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
         trial_period_days: 14,
@@ -72,10 +91,41 @@ export async function POST(req: NextRequest) {
       },
       success_url: `${origin}/confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/pricing?checkout=cancelled`,
-      metadata: { user_id: user.id, plan: 'premium', period },
-    })
+      metadata: {
+        user_id: user.id,
+        plan: 'premium',
+        period,
+        ...(forcedCoupon ? { coupon: forcedCoupon, cross_promo_source: promo?.source ?? '' } : {}),
+      },
+    }
 
-    return NextResponse.json({ url: session.url })
+    if (forcedCoupon) {
+      // Cross-promo: auto-apply coupon, hide promo-code field.
+      params.discounts = [{ coupon: forcedCoupon }]
+    } else {
+      // No forced coupon — allow user to type a code.
+      params.allow_promotion_codes = true
+    }
+
+    const session = await stripe.checkout.sessions.create(params)
+
+    // Link cross_promos click row → user (pre-conversion).
+    if (forcedCoupon && promo?.source) {
+      try {
+        const service = createServiceClient()
+        await service.from('cross_promos').update({
+          user_id: user.id,
+          session_id: session.id,
+        }).eq('source_app', promo.source).is('user_id', null).order('clicked_at', { ascending: false }).limit(1)
+      } catch {
+        // non-blocking
+      }
+    }
+
+    const res = NextResponse.json({ url: session.url })
+
+    // Keep cookie for post-conversion webhook match, but mark session id.
+    return res
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erreur paiement'
     return NextResponse.json({ error: msg }, { status: 500 })
