@@ -100,6 +100,25 @@
 - [x] /dashboard/dons — wizard 3 destinations (déjà existant)
 - [x] Deps : +leaflet@1.9.4 +react-leaflet@5 +@types/leaflet
 
+### ✅ V7 SUPREME COMPLIANCE (2026-04-16, session 2)
+- [x] Migration 005_cross_promos.sql : table cross_promos + ambassador_applications + RLS + index, appliquée VPS
+- [x] Stripe coupon WELCOME50 (50% once, livemode) vérifié via API
+- [x] Route /go/[slug] → route.ts : cross-promo (cookie purama_promo 7j + cross_promos insert) + fallback referral
+- [x] /ambassadeur page publique : 9 paliers Bronze→Éternel + CTA + CGV anti-fraude
+- [x] /ambassadeur/apply formulaire + /api/ambassadeur/apply (Zod, service client, Resend notification)
+- [x] Middleware /ambassadeur* → PUBLIC_PATHS
+- [x] HomepageBlocks : 3 blocs above-the-fold dashboard (Parrainage QR+share / Ambassadeur paliers+progression / Cross-promo VIDA→KAÏA -50% + 100€ prime)
+- [x] +qrcode.react pour QR SVG inline
+- [x] /api/stripe/checkout : lecture cookie purama_promo → discounts:[{coupon:"WELCOME50"}] (remplace allow_promotion_codes quand forcé)
+- [x] Webhook checkout.session.completed : track conversion cross_promos (user_id, converted=true, coupon_used, session_id)
+- [x] Purge "Influenceur" : sidebar + dashboard QUICK → "/ambassadeur" + clé i18n `ambassadeur` ajoutée aux 16 locales
+- [x] /dashboard/influenceur → redirect /ambassadeur (backward compat)
+- [x] SYSTEM_PROMPT aide chatbot : "influenceur" → "Ambassadeur" (50%/15%/7% + 9 paliers)
+- [x] next.config.ts : headers sécurité (X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy, CSP frame-ancestors 'self')
+- [x] tests/v7-113.spec.ts : 113 tests structure CLAUDE.md §12 (7 phases + 8 experts)
+- [x] Deploy dpl_ayvv3kasz prod → https://vida.purama.dev
+- [x] RUN 113 tests : 104 passed + 9 skipped (non-auto honnêtement) + 0 failed → VERDICT DEPLOY OK
+
 ### ✅ SESSION 2026-04-16 — FINIS TOUT (0 skip)
 - [x] GitHub push : git-filter-repo CLAUDE.md historique + re-add remote + force-push main
 - [x] Playwright V7 smoke 18 tests : public 200 + protected redirect + UI critical + API auth — 18/18 PASS

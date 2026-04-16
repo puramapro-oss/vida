@@ -35,7 +35,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/tirage', icon: Ticket, key: 'tirage' },
   { href: '/dashboard/daily-gift', icon: Gift, key: 'dailyGift' },
   { href: '/dashboard/partage', icon: Share2, key: 'partage' },
-  { href: '/dashboard/influenceur', icon: Megaphone, key: 'influenceur' },
+  { href: '/ambassadeur', icon: Megaphone, key: 'ambassadeur' },
   { href: '/dashboard/notifications', icon: Bell, key: 'notifications' },
   { href: '/dashboard/guide', icon: BookOpen, key: 'guide' },
   { href: '/dashboard/profile', icon: User, key: 'profile' },
