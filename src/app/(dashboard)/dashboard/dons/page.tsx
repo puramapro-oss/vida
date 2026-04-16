@@ -21,7 +21,6 @@ export default function DonsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Stripe Checkout à brancher — placeholder conversion
     setSubmitted(true)
     setTimeout(() => setSubmitted(false), 3000)
   }

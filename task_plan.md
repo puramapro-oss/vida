@@ -64,6 +64,22 @@
 
 ### ✅ C6 — i18n 16/16 locales (fallback EN pour 11 nouvelles, à traduire natif en P5)
 
+### ✅ V6 COMPLIANCE (2026-04-16)
+- [x] V1 Infra : .env.local (PHASE/MODELS/WALLET_MODE), .claude/agents/qa.md+security.md, .claude/settings.json hooks, src/lib/phase.ts
+- [x] V2 SQL migration 004 appliquée VPS : retractions, fiscal_notifications, annual_summaries, engagement_modes, ambassador_tiers, card_waitlist, prime_payouts, referrals multi-level, subscription_started_at
+- [x] V3 Paiement : /subscribe (bouton L221-28), /confirmation (confettis+deep link), /dashboard/settings/abonnement (résil 3 étapes), webhook +invoice.payment_failed +charge.refunded + prime tranches scheduler (25€ J+0 créditée, 25€ M+1, 50€ M+2)
+- [x] V3 CGU Art.8 clause L221-28 Code conso (waiver implicite par clic, retrait 30j)
+- [x] V4 Fiscal : /fiscal page, FiscalBanner (>3000€ avril→juin), CRON /api/cron/fiscal
+- [x] V5 Wealth V4 : CardTeaser, WalletPhase1, Flywheel, SocialFeed, PuramaScore, /api/wallet/card-waitlist
+- [x] Middleware /fiscal /subscribe /confirmation ajoutés PUBLIC_PATHS
+- [x] tsc 0 · build 69 routes · smoke test 6/6 = 200
+- [x] Deploy prod https://vida.purama.dev
+
+### ❌ PUSH GITHUB bloqué (secret scanning)
+- CLAUDE.md supprimé du tracking mais reste dans l'historique commits
+- Fix : `git filter-repo --path CLAUDE.md --invert-paths` puis force-push
+- N'empêche pas la prod (déjà live Vercel)
+
 ### ❌ RESTE
 - C5 polish wording VIDA sur pages héritées (referral, wallet, classement, concours, tirage, daily-gift, partage, influenceur, notifications, guide, profile, settings)
 - C7 QA : Playwright E2E + Lighthouse >90 + test humain 23 points
