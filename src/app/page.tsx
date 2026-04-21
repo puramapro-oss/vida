@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import dynamic from 'next/dynamic'
+const CinematicIntro = dynamic(() => import('@/components/shared/CinematicIntro'), { ssr: false })
 import {
   Leaf,
   Heart,
@@ -210,6 +212,7 @@ const FAQ = [
 export default function LandingPage() {
   return (
     <>
+      <CinematicIntro />
       <div className="vida-nature-bg" />
       <div className="aurora" />
 
