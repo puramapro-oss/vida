@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createServiceClient } from '@/lib/supabase'
 import { streamClaude, getSystemPrompt } from '@/lib/claude'
 import { PLAN_LIMITS, SUPER_ADMIN_EMAIL } from '@/lib/constants'
+import { LAW_CONTEXT, isDroitsQuery } from '@/lib/legifrance'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -80,7 +81,9 @@ export async function POST(req: NextRequest) {
           if (currentConvId) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ conversationId: currentConvId })}\n\n`))
           }
-          for await (const chunk of streamClaude(messages, plan, getSystemPrompt())) {
+          const lastMsg = messages[messages.length - 1]?.content ?? ''
+          const context = isDroitsQuery(lastMsg) ? { articles: [LAW_CONTEXT] } : undefined
+          for await (const chunk of streamClaude(messages, plan, getSystemPrompt(context), context)) {
             fullResponse += chunk
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: chunk })}\n\n`))
           }
