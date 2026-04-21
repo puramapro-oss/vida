@@ -10,10 +10,10 @@ interface Msg {
 }
 
 const STARTERS = [
-  'Aide-moi à poser une intention pour ma journée.',
-  'Comment retrouver de l\'énergie quand je suis épuisé·e ?',
-  'Guide-moi dans une respiration 4-7-8.',
-  'Quelle gratitude noter ce soir ?',
+  'Suis-je éligible au RSA ? Je travaille à temps partiel.',
+  'Comment demander l\'AAH à la MDPH ?',
+  'J\'ai perdu mon emploi — quelles aides puis-je toucher ?',
+  'Puis-je cumuler APL et prime d\'activité ?',
 ]
 
 export default function ChatPage() {
@@ -111,7 +111,7 @@ export default function ChatPage() {
             Je suis VIDA.
           </h1>
           <p className="text-[var(--text-secondary)] max-w-md mb-8">
-            Une présence vivante. Pose ta question, je t'écoute.
+            Expert en droits sociaux. Pose ta question sur tes aides, allocations ou démarches administratives.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-xl">
             {STARTERS.map(s => (
@@ -169,7 +169,7 @@ export default function ChatPage() {
                 send(input)
               }
             }}
-            placeholder="Pose ta question, partage ce que tu vis…"
+            placeholder="Pose ta question sur tes droits, aides ou démarches…"
             rows={1}
             data-testid="chat-input"
             className="flex-1 resize-none bg-transparent px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none max-h-32"
