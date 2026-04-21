@@ -175,7 +175,7 @@
 - [x] Starters droits sociaux dans /dashboard/chat
 - [x] System prompt expert droits sociaux FR
 
-### ❌ P5 — Design + Anim + i18n 16
+### ✅ P5 — Design + Anim (2026-04-21, commit ca2b932)
 - [ ] Landing cinématique 13s
 - [ ] Framer animations : parallax, reveal, counter
 - [ ] Background nature (vidéo optimisée)
