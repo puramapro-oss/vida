@@ -1,17 +1,30 @@
 {
   "permissions": {
-    "allow": ["Bash(*)", "Read(*)", "Write(*)", "Edit(*)"]
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)"
+    ]
   },
   "model": "claude-sonnet-4-6",
-  "thinking": { "enabled": true, "budget": 10000 },
+  "thinking": {
+    "enabled": true,
+    "budget": 10000
+  },
   "outputStyle": "explanatory",
   "autoCompact": true,
-  "env": { "MAX_THINKING_TOKENS": "10000" },
+  "env": {
+    "MAX_THINKING_TOKENS": "10000"
+  },
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
-          { "command": "cat ~/purama/LEARNINGS.md 2>/dev/null | tail -20 || true" }
+          {
+            "command": "cat ~/purama/LEARNINGS.md 2>/dev/null | tail -20 || true",
+            "type": "command"
+          }
         ]
       }
     ],
@@ -19,7 +32,10 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "command": "echo $CLAUDE_FILE_PATH | grep -qE '\\.(env|lock)$' && echo 'BLOCKED: .env or .lock file' && exit 1 || exit 0" }
+          {
+            "command": "echo $CLAUDE_FILE_PATH | grep -qE '\\.(env|lock)$' && echo 'BLOCKED: .env or .lock file' && exit 1 || exit 0",
+            "type": "command"
+          }
         ]
       }
     ],
@@ -27,14 +43,20 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "command": "npx prettier --write $CLAUDE_FILE_PATH 2>/dev/null || true" }
+          {
+            "command": "npx prettier --write $CLAUDE_FILE_PATH 2>/dev/null || true",
+            "type": "command"
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "command": "grep -rn 'TODO\\|console\\.log\\|placeholder\\|any:\\|Lorem\\|témoignage' src/ 2>/dev/null | head -10 && echo '⛔ PLACEHOLDERS OR FAKE CONTENT — FIX' && exit 2 || echo '✅ Clean'" }
+          {
+            "command": "grep -rn 'TODO\\|console\\.log\\|placeholder\\|any:\\|Lorem\\|t\u00e9moignage' src/ 2>/dev/null | head -10 && echo '\u26d4 PLACEHOLDERS OR FAKE CONTENT \u2014 FIX' && exit 2 || echo '\u2705 Clean'",
+            "type": "command"
+          }
         ]
       }
     ]
