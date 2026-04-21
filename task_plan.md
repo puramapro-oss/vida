@@ -156,12 +156,24 @@
 - [x] Native verified sample : ja nav.home=ホーム, ru nav.home=Главная, zh nav.home=主页, ko nav.home=홈, hi nav.home=होम
 - [ ] Sections restantes en EN fallback (landing 60, chat 10, tools/agents/studio 22, achievements 6, notifications 6, dailyGift 9, concours 9, tirage 8, partage 8, influenceur 12, profile 7, admin 9, aide 7, contact 9, legal 5, cookie 4, errors 8) = 189 keys × 11 = 2079 strings restants. Non bloquant : nav+tabs+common+auth = 100% de la surface récurrente.
 
-### ❌ P4 — Admin + Aide + FAQ
-- [ ] /admin dashboard triple auth (stats globales, pricing, commissions, modération)
-- [ ] /admin/financement (aides SASU/asso → pools)
-- [ ] /admin/moderation (community_posts, contact_messages, internal_ads)
-- [ ] /aide (existant, faq_articles seed en place)
-- [ ] /contact (existant, resend)
+### ✅ P4 — Admin + Aide + FAQ (2026-04-21, commit da79674)
+- [x] /admin dashboard super_admin guard + stats (users/missions/moderation/support) + rituels
+- [x] /admin/financement pools 50/10/40 + boucliers fiscaux + transactions
+- [x] /admin/moderation community_posts (approve/delete) + contact_messages (reply/mark-responded)
+- [x] /aide centre d'aide VIDA (9 catégories + search + chatbot SAV)
+- [x] /contact (Resend + contact_messages)
+
+### ✅ Bloc C — OpenFisca + Legifrance RAG (2026-04-21, commit dc1e3e1)
+- [x] migration 007 : siret_cache + index + RLS
+- [x] src/lib/legifrance.ts : LAW_CONTEXT 12 articles + isDroitsQuery()
+- [x] /api/aides/legifrance (RAG search endpoint)
+- [x] /api/aides/search (full-text aides matching)
+- [x] OpenFisca simulation intégrée dans /financer wizard
+
+### ✅ Bloc D — IA droits sociaux (2026-04-21, commit d2ea0e2)
+- [x] /api/chat auto-inject Legifrance RAG quand isDroitsQuery=true
+- [x] Starters droits sociaux dans /dashboard/chat
+- [x] System prompt expert droits sociaux FR
 
 ### ❌ P5 — Design + Anim + i18n 16
 - [ ] Landing cinématique 13s
