@@ -4,6 +4,18 @@
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 120
+    },
+    "src/app/api/cron/sync-legifrance/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/admin/sync-legifrance/route.ts": {
+      "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/sync-legifrance",
+      "schedule": "0 3 * * 0"
+    }
+  ]
 }
