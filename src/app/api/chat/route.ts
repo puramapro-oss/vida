@@ -4,6 +4,8 @@ import { createServiceClient } from '@/lib/supabase'
 import { streamClaude, getSystemPrompt } from '@/lib/claude'
 import { PLAN_LIMITS, SUPER_ADMIN_EMAIL } from '@/lib/constants'
 import { LAW_CONTEXT, isDroitsQuery } from '@/lib/legifrance'
+import { searchArticles } from '@/lib/legifrance/cache'
+import type { LegifranceArticle } from '@/lib/legifrance/types'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -82,7 +84,7 @@ export async function POST(req: NextRequest) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ conversationId: currentConvId })}\n\n`))
           }
           const lastMsg = messages[messages.length - 1]?.content ?? ''
-          const context = isDroitsQuery(lastMsg) ? { articles: [LAW_CONTEXT] } : undefined
+          const context = isDroitsQuery(lastMsg) ? await buildLegalContext(lastMsg) : undefined
           for await (const chunk of streamClaude(messages, plan, getSystemPrompt(context), context)) {
             fullResponse += chunk
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: chunk })}\n\n`))
@@ -115,4 +117,45 @@ export async function POST(req: NextRequest) {
     const msg = err instanceof Error ? err.message : 'Erreur serveur'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
+}
+
+/**
+ * C7 F8 — Construit le block ARTICLES DE LOI pour le prompt Claude.
+ *
+ * Stratégie :
+ *   1. Si LEGIFRANCE_DYNAMIC=true → searchArticles() sur le cache layered
+ *      (Upstash → Postgres FTS → PISTE → static).
+ *   2. Si results.length === 0 OU LEGIFRANCE_DYNAMIC=false → fallback LAW_CONTEXT
+ *      hardcodé (les 12 articles de la V7.1, toujours embarqués).
+ *   3. En cas d'erreur silencieuse — fallback static immédiat, on ne casse JAMAIS
+ *      le chat.
+ */
+async function buildLegalContext(userQuery: string): Promise<{ articles: string[] }> {
+  const useDynamic = process.env.LEGIFRANCE_DYNAMIC === 'true'
+
+  if (!useDynamic) {
+    return { articles: [LAW_CONTEXT] }
+  }
+
+  try {
+    const results = await searchArticles({ query: userQuery, topK: 5 })
+    if (results.length === 0) {
+      // Pas de résultat dynamique → fallback sur static complet
+      return { articles: [LAW_CONTEXT] }
+    }
+    return {
+      articles: results.map(({ article }) => formatArticleForPrompt(article)),
+    }
+  } catch {
+    // Erreur quelconque (PG down, network, etc.) → fallback
+    return { articles: [LAW_CONTEXT] }
+  }
+}
+
+/** Formate un article pour insertion dans le system prompt. */
+function formatArticleForPrompt(article: LegifranceArticle): string {
+  const code = article.code_nom || 'Code'
+  const numero = article.numero || article.cid
+  const texte = article.texte.length > 600 ? `${article.texte.slice(0, 600)}…` : article.texte
+  return `[Art. ${numero} ${code}] ${texte}\nSource officielle : ${article.url_legifrance}`
 }
