@@ -1,0 +1,37 @@
+# VIDA — Flow 07 : Pricing (via Profil → Facturation)
+# App Store : iOS ne mentionne PAS "S'abonner" directement (règle CLAUDE.md §23).
+# Profil → "Facturation" ouvre Linking vers vida.purama.dev/dashboard/settings/abonnement
+# qui redirige vers Stripe Checkout hébergé côté web.
+appId: dev.purama.vida
+---
+- launchApp
+
+- runFlow:
+    when:
+      visible:
+        id: "login-title"
+    commands:
+      - tapOn:
+          id: "login-email"
+      - inputText: "matiss.frasne@gmail.com"
+      - tapOn:
+          id: "login-password"
+      - inputText: "TestVidaMaestro2026!"
+      - tapOn:
+          id: "login-submit"
+
+- tapOn: "Profil"
+
+# Bouton "Facturation" visible (neutral wording iOS-safe)
+- assertVisible:
+    id: "profile-billing"
+- assertVisible: "Abonnement, factures"
+
+- tapOn:
+    id: "profile-billing"
+
+# Linking.openURL ouvre Safari/Chrome → on sort de l'app
+# Attendre 2s puis revenir à VIDA
+- back
+- assertVisible:
+    id: "profile-name"

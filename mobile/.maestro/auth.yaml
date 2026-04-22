@@ -1,0 +1,40 @@
+# VIDA — Flow 01 : Auth
+# Parcours : Launch → login screen visible → tap signup → signup screen →
+#            back → login → fill → submit → dashboard visible
+appId: dev.purama.vida
+---
+- clearState
+- launchApp
+
+# Login screen s'affiche par défaut (AuthGate redirige non-auth)
+- assertVisible:
+    id: "login-title"
+- assertVisible: "Ton écosystème vivant"
+
+# Navigation vers signup
+- tapOn: "S'inscrire"
+- assertVisible:
+    id: "signup-title"
+- assertVisible: "Rejoins le mouvement"
+
+# Retour login via le lien "Se connecter"
+- tapOn: "Se connecter"
+- assertVisible:
+    id: "login-title"
+
+# Saisie credentials (compte test seeded en DB)
+- tapOn:
+    id: "login-email"
+- inputText: "matiss.frasne@gmail.com"
+- tapOn:
+    id: "login-password"
+- inputText: "TestVidaMaestro2026!"
+
+# Submit
+- tapOn:
+    id: "login-submit"
+
+# Dashboard visible après auth réussie
+- assertVisible:
+    id: "greeting"
+- assertVisible: "Ton écosystème vivant t'attend"

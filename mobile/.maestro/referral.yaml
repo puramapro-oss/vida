@@ -1,0 +1,34 @@
+# VIDA — Flow 05 : Parrainage (accessible depuis Profil → Parrainage)
+# Ouvre le web (Linking.openURL vers vida.purama.dev/dashboard/referral)
+appId: dev.purama.vida
+---
+- launchApp
+
+- runFlow:
+    when:
+      visible:
+        id: "login-title"
+    commands:
+      - tapOn:
+          id: "login-email"
+      - inputText: "matiss.frasne@gmail.com"
+      - tapOn:
+          id: "login-password"
+      - inputText: "TestVidaMaestro2026!"
+      - tapOn:
+          id: "login-submit"
+
+- tapOn: "Profil"
+- assertVisible:
+    id: "profile-name"
+
+# Tap referral → ouvre Linking vers /dashboard/referral
+- assertVisible:
+    id: "profile-referral"
+- tapOn:
+    id: "profile-referral"
+
+# Maestro ne suit pas les openURL hors app → on revient juste dans VIDA
+- back
+- assertVisible:
+    id: "profile-name"

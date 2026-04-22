@@ -1,0 +1,51 @@
+# VIDA — Flow 02 : Dashboard (impact + quick actions)
+# Pré-requis : auth déjà fait (session persistée via SecureStore)
+appId: dev.purama.vida
+---
+- launchApp
+
+# Si pas loggé, skip (flow isolé testable avec un compte pré-authentifié)
+- runFlow:
+    when:
+      visible:
+        id: "login-title"
+    commands:
+      - tapOn:
+          id: "login-email"
+      - inputText: "matiss.frasne@gmail.com"
+      - tapOn:
+          id: "login-password"
+      - inputText: "TestVidaMaestro2026!"
+      - tapOn:
+          id: "login-submit"
+
+# Dashboard
+- assertVisible:
+    id: "greeting"
+- assertVisible: "On construit, pas à pas."
+- assertVisible: "missions réelles"
+- assertVisible: "aides recensées"
+- assertVisible: "réponses claires"
+- assertVisible: "graines plantées"
+
+# 4 quick actions cliquables (sans fermer l'app, selectionAsync haptics)
+- assertVisible:
+    id: "action-breath"
+- assertVisible:
+    id: "action-steps"
+- assertVisible:
+    id: "action-gratitude"
+- assertVisible:
+    id: "action-intention"
+
+- tapOn:
+    id: "action-breath"
+- tapOn:
+    id: "action-gratitude"
+
+# Scroll pour vérifier que toute la page rend
+- scroll
+- scrollUntilVisible:
+    element:
+      text: "graines plantées"
+    direction: UP

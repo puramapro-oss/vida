@@ -1,0 +1,50 @@
+# VIDA — Flow 09 : Error handling (credentials invalides + chat offline)
+# Vérifie : messages FR explicites, jamais d'écran blanc, retry possible
+appId: dev.purama.vida
+---
+- clearState
+- launchApp
+
+- extendedWaitUntil:
+    visible:
+      id: "login-title"
+    timeout: 10000
+
+# Tentative login avec mauvais password
+- tapOn:
+    id: "login-email"
+- inputText: "matiss.frasne@gmail.com"
+- tapOn:
+    id: "login-password"
+- inputText: "wrong-password"
+- tapOn:
+    id: "login-submit"
+
+# Message d'erreur FR explicite (pas "Error 500")
+- assertVisible: "Email ou mot de passe incorrect."
+
+# Champs toujours éditables après erreur
+- tapOn:
+    id: "login-password"
+- eraseText: 30
+- inputText: "TestVidaMaestro2026!"
+- tapOn:
+    id: "login-submit"
+
+# Succès → dashboard
+- extendedWaitUntil:
+    visible:
+      id: "greeting"
+    timeout: 10000
+
+# Test offline chat : simulation en envoyant message court
+- tapOn: "Chat"
+- tapOn:
+    id: "chat-input"
+- inputText: "ping"
+- tapOn:
+    id: "chat-send"
+
+# Si offline/timeout → fallback FR s'affiche sans crash
+# (Si online, la vraie réponse s'affiche — les deux cas sont valides)
+- waitForAnimationToEnd

@@ -1,0 +1,39 @@
+# VIDA — Flow 10 : Santé (HealthKit iOS / Health Connect Android)
+# Profil → "Santé & HealthKit" → déclenche requestHealthPermissions()
+#
+# NB : Les dialogues natifs de permissions iOS/Android ne sont PAS des vues React.
+# Maestro les gère via `runScript` ou bouton système ("Allow" / "Autoriser").
+appId: dev.purama.vida
+---
+- launchApp
+
+- runFlow:
+    when:
+      visible:
+        id: "login-title"
+    commands:
+      - tapOn:
+          id: "login-email"
+      - inputText: "matiss.frasne@gmail.com"
+      - tapOn:
+          id: "login-password"
+      - inputText: "TestVidaMaestro2026!"
+      - tapOn:
+          id: "login-submit"
+
+- tapOn: "Profil"
+- assertVisible:
+    id: "profile-health"
+- assertVisible: "Connecter / déconnecter"
+
+- tapOn:
+    id: "profile-health"
+
+# Actuellement : Alert.alert("Santé", "Configuration HealthKit à venir")
+# Quand F5/F7 seront complets → permissions natives
+- assertVisible: "Santé"
+- tapOn: "OK"
+
+# Retour sur profil sans crash
+- assertVisible:
+    id: "profile-name"
