@@ -254,7 +254,12 @@
 - [x] **F6** Icônes VIDA via Pollinations + sharp (commit F6)
   - `scripts/generate-icons.mjs` : prompt lotus leaf #10B981 / void #030806, seed=42 reproductible
   - icon.png 1024² + android-icon-foreground 1024² (pad 100px safe zone) + splash 1284×2778 (centrée) + favicon 48²
-- [ ] **F7** 10 Maestro flows YAML (auth, dashboard, chat, wallet, referral, onboarding, pricing, responsive, error, health)
+- [x] **F7** 10 Maestro flows YAML (commit F7)
+  - `.maestro/` : config.yaml + 10 flows (auth, dashboard, chat, wallet, referral, onboarding, pricing, responsive, error, health)
+  - 11 YAML docs · 139 steps · 100% testIDs déjà présents dans le code
+  - Validation js-yaml : 11/11 valid
+  - README.md : installation Maestro + usage local (EAS dev-client) + Maestro Cloud CI/CD
+  - Regression web p5-landing : 5/5 · mobile tsc = 0
 - [ ] **F8** EAS build + submit — **BLOQUÉ** : nécessite `APPLE_TEAM_ID` rempli dans `.env.local` + `google-service-account.json` à la racine mobile/
 
 **Blockers EAS Build (F8)** :
