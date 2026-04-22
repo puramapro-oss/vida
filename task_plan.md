@@ -163,12 +163,19 @@
 - [x] /aide centre d'aide VIDA (9 catégories + search + chatbot SAV)
 - [x] /contact (Resend + contact_messages)
 
-### ✅ Bloc C — OpenFisca + Legifrance RAG (2026-04-21, commit dc1e3e1)
-- [x] migration 007 : siret_cache + index + RLS
+### ✅ Bloc C — OpenFisca + Legifrance RAG (2026-04-21 → 2026-04-22 FINALISÉ)
+- [x] migration 007_aides_enrichies : openfisca_variable + legifrance_refs + simulation_possible (commit dc1e3e1)
 - [x] src/lib/legifrance.ts : LAW_CONTEXT 12 articles + isDroitsQuery()
-- [x] /api/aides/legifrance (RAG search endpoint)
-- [x] /api/aides/search (full-text aides matching)
-- [x] OpenFisca simulation intégrée dans /financer wizard
+- [x] /api/aides/legifrance (RAG search endpoint — existait, gate 401)
+- [x] /api/aides/search (OpenFisca live + enrichment — existait, code mort)
+- [x] **C1 (2026-04-22 commit 75d49e6)** : /financer branche /api/aides/search. Progressive enhancement — toggle 'Affiner avec mes chiffres réels' expose age/revenus/enfants/loyer/région. Auth user + champs rempli → OpenFisca. Sinon → fallback /api/financer/match.
+- [x] **C2 (2026-04-22 commit 463753a)** : UI cards — badge vert 'OpenFisca' ou gris 'Plafond estimatif'. Section 'Base légale' cliquable vers legifrance.gouv.fr. Hero step 2 bandeau 'Simulation officielle OpenFisca'. PDF enrichi.
+- [x] **C3 (2026-04-22 commit 24435b0)** : Cache Supabase TTL 6h sur /api/aides/search. Migration 008_openfisca_cache. Hash SHA-256 profil normalisé. Skip super_admin. Best-effort fallback.
+- [x] **C4 (2026-04-22 commit c4dd844)** : Migration 009_aides_legifrance_complete. Les 45 aides ont leur base légale (vs 10 seulement avant).
+- [x] **C5 (2026-04-22 commit 822c994)** : Migration 010_aide_simulations. Table traçabilité (user_id nullable, profil_hash, aides_count, cumul, simulation_ok, cache_hit, source). Logs /api/aides/search + /api/financer/match. Function purge 6 mois RGPD.
+- [x] **C6 (2026-04-22 commit f194583)** : tests/bloc-c.spec.ts — 8 tests Playwright (C1+C2+C4+C8+D). 8/8 PASS prod. v7-smoke 18/18 toujours vert (0 régression).
+- [x] **C8 (2026-04-22 commit 6baf6fd)** : src/components/shared/FinancerDisclaimer.tsx — modal 1ère visite (TTL 365j localStorage). Conformité CNIL/DGCCRF. Pas d'organisme social + vérifier sur sites officiels.
+- [ ] **C7 (reporté V7.2)** : vraie API Legifrance DILA (OAuth2 piste.oauth2.piste.gouv.fr). LAW_CONTEXT reste hardcodé TS en V7.1 — fonctionne pour MVP mais articles figés à 2026.
 
 ### ✅ Bloc D — IA droits sociaux (2026-04-21, commit d2ea0e2)
 - [x] /api/chat auto-inject Legifrance RAG quand isDroitsQuery=true
