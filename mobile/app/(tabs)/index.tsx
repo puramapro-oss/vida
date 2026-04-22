@@ -1,98 +1,163 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react'
+import { View, Text, ScrollView, RefreshControl, Pressable } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
+import { useAuth } from '../../src/hooks/useAuth'
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+interface Impact {
+  missions_count: number
+  aides_count: number
+  faq_count: number
+  users_count: number
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+export default function DashboardScreen() {
+  const { user } = useAuth()
+  const [impact, setImpact] = useState<Impact | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+
+  async function load() {
+    try {
+      const res = await fetch('https://vida.purama.dev/api/impact/public', {
+        cache: 'no-store' as RequestCache,
+      })
+      if (res.ok) setImpact(await res.json())
+    } catch {
+      // silent fallback
+    }
+  }
+
+  useEffect(() => {
+    load()
+  }, [])
+
+  async function onRefresh() {
+    setRefreshing(true)
+    await Haptics.selectionAsync()
+    await load()
+    setRefreshing(false)
+  }
+
+  const firstName = (user?.user_metadata?.full_name as string | undefined)?.split(' ')[0] ?? 'toi'
+
+  return (
+    <SafeAreaView className="flex-1 bg-void">
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 120 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#10B981"
+            colors={['#10B981']}
+          />
+        }
+      >
+        <LinearGradient
+          colors={['rgba(16,185,129,0.18)', 'transparent']}
+          className="absolute inset-x-0 top-0 h-64"
+          pointerEvents="none"
+        />
+
+        {/* Header */}
+        <View className="px-6 pt-4 pb-6">
+          <Text className="text-text-muted text-sm uppercase tracking-wider">Bonjour</Text>
+          <Text className="text-text-primary text-4xl font-bold mt-1" testID="greeting">
+            {firstName}
+          </Text>
+          <Text className="text-text-secondary text-base mt-2">
+            Ton écosystème vivant t&apos;attend.
+          </Text>
+        </View>
+
+        {/* Impact section */}
+        <View className="px-6 mb-6">
+          <Text className="text-emerald text-xs uppercase tracking-widest mb-3">Ensemble</Text>
+          <Text className="text-text-primary text-2xl font-semibold mb-6">
+            On construit, pas à pas.
+          </Text>
+
+          <View className="flex-row flex-wrap gap-3">
+            <StatCard label="missions réelles" value={impact?.missions_count ?? 0} />
+            <StatCard label="aides recensées" value={impact?.aides_count ?? 0} />
+            <StatCard label="réponses claires" value={impact?.faq_count ?? 0} />
+            <StatCard label="graines plantées" value={impact?.users_count ?? 0} />
+          </View>
+        </View>
+
+        {/* Quick actions */}
+        <View className="px-6 mb-8">
+          <Text className="text-emerald text-xs uppercase tracking-widest mb-3">Aujourd&apos;hui</Text>
+
+          <View className="gap-3">
+            <ActionRow
+              emoji="🌬"
+              title="Respire avec moi"
+              desc="57 secondes — 4-7-8"
+              testID="action-breath"
+            />
+            <ActionRow
+              emoji="👣"
+              title="Tes pas du jour"
+              desc="Connecté à HealthKit / Health Connect"
+              testID="action-steps"
+            />
+            <ActionRow
+              emoji="💚"
+              title="Journal gratitude"
+              desc="3 lignes avant de dormir"
+              testID="action-gratitude"
+            />
+            <ActionRow
+              emoji="📝"
+              title="Intention du jour"
+              desc="Ce que tu veux semer"
+              testID="action-intention"
+            />
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  )
+}
+
+function StatCard({ value, label }: { value: number; label: string }) {
+  return (
+    <View
+      className="bg-white/5 border border-border rounded-3xl p-4"
+      style={{ width: '48%' }}
+    >
+      <Text className="text-text-primary text-3xl font-bold">
+        {value.toLocaleString('fr-FR')}
+      </Text>
+      <Text className="text-text-muted text-xs uppercase tracking-wider mt-1">{label}</Text>
+    </View>
+  )
+}
+
+function ActionRow({
+  emoji,
+  title,
+  desc,
+  testID,
+}: {
+  emoji: string
+  title: string
+  desc: string
+  testID?: string
+}) {
+  return (
+    <Pressable
+      testID={testID}
+      onPress={() => Haptics.selectionAsync()}
+      className="bg-white/5 border border-border rounded-2xl px-5 py-4 active:opacity-70 flex-row items-center"
+    >
+      <Text className="text-2xl mr-4">{emoji}</Text>
+      <View className="flex-1">
+        <Text className="text-text-primary text-base font-medium">{title}</Text>
+        <Text className="text-text-muted text-sm mt-0.5">{desc}</Text>
+      </View>
+    </Pressable>
+  )
+}
