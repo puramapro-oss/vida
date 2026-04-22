@@ -7,7 +7,7 @@ export default defineConfig({
   workers: 2,
   reporter: [['list']],
   use: {
-    baseURL: 'https://vida.purama.dev',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://vida.purama.dev',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },

@@ -465,5 +465,31 @@
     "unauthorized": "Acceso no autorizado",
     "networkError": "Error de red. Verifica tu conexión.",
     "rateLimited": "Demasiadas solicitudes. Espera un momento."
+  },
+  "breath": {
+    "title": "Respiration 4-7-8",
+    "intro": "Prêt·e ?",
+    "inspire": "Inspire",
+    "hold": "Retiens",
+    "expire": "Expire",
+    "done": "Merci",
+    "inspireHint": "Inspire par le nez, lentement, pendant 4 secondes.",
+    "holdHint": "Retiens ton souffle pendant 7 secondes. Sens l'énergie circuler.",
+    "expireHint": "Expire par la bouche, tout doucement, pendant 8 secondes.",
+    "introHint": "La respiration commence dans un instant. Assieds-toi confortablement.",
+    "doneHint": "Tu viens d'offrir 57 secondes à ton corps. Merci.",
+    "cta": "Respire avec moi — 57 secondes",
+    "continue": "Continuer",
+    "skip": "Passer →",
+    "closeLabel": "Fermer la respiration",
+    "cycleLabel": "Cycle {current} / {total}"
+  },
+  "impact": {
+    "heading": "On construit, pas à pas.",
+    "eyebrow": "Ensemble",
+    "missions": "missions réelles",
+    "aides": "aides recensées",
+    "faq": "réponses claires",
+    "users": "graines plantées"
   }
 }

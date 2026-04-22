@@ -389,12 +389,80 @@ h1, h2, h3, h4, h5, h6,
   position: fixed;
   inset: 0;
   z-index: -1;
+  overflow: hidden;
   background:
     radial-gradient(ellipse at 20% 10%, rgba(16,185,129,0.12) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 90%, rgba(132,204,22,0.10) 0%, transparent 50%),
     radial-gradient(ellipse at 50% 50%, rgba(5,150,105,0.06) 0%, transparent 70%),
     #030806;
   pointer-events: none;
+  animation: vida-bg-drift 45s ease-in-out infinite alternate;
+}
+
+[data-theme='light'] .vida-nature-bg {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(16,185,129,0.22) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(132,204,22,0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(5,150,105,0.10) 0%, transparent 70%),
+    #f0fdf4;
+}
+
+@keyframes vida-bg-drift {
+  0%   { background-position: 0% 0%, 100% 100%, 50% 50%, 0 0; }
+  50%  { background-position: 8% 6%, 92% 94%, 45% 55%, 0 0; }
+  100% { background-position: 0% 4%, 100% 96%, 55% 45%, 0 0; }
+}
+
+/* Feuilles flottantes — pur CSS, zéro réseau */
+.vida-nature-bg::before,
+.vida-nature-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  opacity: 0.35;
+}
+
+/* Couche 1 : feuilles grandes, drift lent */
+.vida-nature-bg::before {
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><path d='M12 36c4-18 20-24 28-28-4 20-16 28-28 28zm0 0c2-6 8-14 18-20' fill='none' stroke='%2310B981' stroke-width='1.2' stroke-linecap='round' opacity='0.55'/></svg>"),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><path d='M12 36c4-18 20-24 28-28-4 20-16 28-28 28zm0 0c2-6 8-14 18-20' fill='none' stroke='%2384cc16' stroke-width='1.2' stroke-linecap='round' opacity='0.45'/></svg>"),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><path d='M12 36c4-18 20-24 28-28-4 20-16 28-28 28zm0 0c2-6 8-14 18-20' fill='none' stroke='%2310B981' stroke-width='1.2' stroke-linecap='round' opacity='0.5'/></svg>");
+  background-position: 8% 15%, 78% 38%, 42% 82%;
+  background-size: 48px 48px;
+  animation: vida-leaf-drift-a 55s linear infinite;
+}
+
+/* Couche 2 : feuilles plus petites, drift inverse */
+.vida-nature-bg::after {
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 48 48'><path d='M12 36c4-18 20-24 28-28-4 20-16 28-28 28zm0 0c2-6 8-14 18-20' fill='none' stroke='%236ee7b7' stroke-width='1.4' stroke-linecap='round' opacity='0.55'/></svg>"),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 48 48'><path d='M12 36c4-18 20-24 28-28-4 20-16 28-28 28zm0 0c2-6 8-14 18-20' fill='none' stroke='%2310B981' stroke-width='1.4' stroke-linecap='round' opacity='0.5'/></svg>"),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 48 48'><path d='M12 36c4-18 20-24 28-28-4 20-16 28-28 28zm0 0c2-6 8-14 18-20' fill='none' stroke='%2384cc16' stroke-width='1.4' stroke-linecap='round' opacity='0.45'/></svg>");
+  background-position: 22% 68%, 62% 12%, 88% 55%;
+  background-size: 32px 32px;
+  animation: vida-leaf-drift-b 80s linear infinite;
+  opacity: 0.28;
+}
+
+@keyframes vida-leaf-drift-a {
+  0%   { background-position: 8% 15%, 78% 38%, 42% 82%; transform: translateY(0); }
+  50%  { background-position: 12% 60%, 82% 78%, 46% 30%; transform: translateY(-8px); }
+  100% { background-position: 8% 105%, 78% 128%, 42% 172%; transform: translateY(0); }
+}
+
+@keyframes vida-leaf-drift-b {
+  0%   { background-position: 22% 68%, 62% 12%, 88% 55%; transform: translateX(0); }
+  50%  { background-position: 28% 34%, 58% 50%, 84% 88%; transform: translateX(6px); }
+  100% { background-position: 22% -28%, 62% -52%, 88% 15%; transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vida-nature-bg,
+  .vida-nature-bg::before,
+  .vida-nature-bg::after { animation: none !important; }
 }
 
 .vida-pulse-dot {

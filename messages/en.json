@@ -465,5 +465,31 @@
     "unauthorized": "Access denied",
     "networkError": "Network error. Check your connection.",
     "rateLimited": "Too many requests. Wait a moment."
+  },
+  "breath": {
+    "title": "4-7-8 Breathing",
+    "intro": "Ready?",
+    "inspire": "Breathe in",
+    "hold": "Hold",
+    "expire": "Breathe out",
+    "done": "Thank you",
+    "inspireHint": "Breathe in through your nose, slowly, for 4 seconds.",
+    "holdHint": "Hold your breath for 7 seconds. Feel the energy flow.",
+    "expireHint": "Breathe out through your mouth, gently, for 8 seconds.",
+    "introHint": "Breathing starts in a moment. Sit comfortably.",
+    "doneHint": "You just gave your body 57 seconds. Thank you.",
+    "cta": "Breathe with me — 57 seconds",
+    "continue": "Continue",
+    "skip": "Skip →",
+    "closeLabel": "Close breathing",
+    "cycleLabel": "Cycle {current} / {total}"
+  },
+  "impact": {
+    "heading": "Building, step by step.",
+    "eyebrow": "Together",
+    "missions": "real missions",
+    "aides": "aids listed",
+    "faq": "clear answers",
+    "users": "seeds planted"
   }
 }

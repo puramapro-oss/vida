@@ -1,21 +1,27 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Leaf } from 'lucide-react'
 
 export default function CinematicIntro() {
   const [visible, setVisible] = useState(false)
+  const reduced = useReducedMotion()
 
   useEffect(() => {
     try {
       if (typeof window !== 'undefined' && !localStorage.getItem('vida_intro_seen')) {
+        // prefers-reduced-motion : on skip l'intro entièrement
+        if (reduced) {
+          localStorage.setItem('vida_intro_seen', '1')
+          return
+        }
         setVisible(true)
         const t = setTimeout(() => dismiss(), 4000)
         return () => clearTimeout(t)
       }
     } catch {}
-  }, [])
+  }, [reduced])
 
   function dismiss() {
     try { localStorage.setItem('vida_intro_seen', '1') } catch {}
