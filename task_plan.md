@@ -182,13 +182,25 @@
 - [x] Starters droits sociaux dans /dashboard/chat
 - [x] System prompt expert droits sociaux FR
 
-### ✅ P5 — Design + Anim (2026-04-21, commit ca2b932)
-- [ ] Landing cinématique 13s
-- [ ] Framer animations : parallax, reveal, counter
-- [ ] Background nature (vidéo optimisée)
-- [ ] Mode "Sans Interaction" (respiration)
-- [ ] i18n 16 langues (messages FR déjà, copier vers autres)
-- [ ] Accessibilité : VoiceOver, contrastes, sous-titres
+### ✅ P5 — Design + Anim (2026-04-22, commits 045bcd1 + c8afc9a)
+- [x] **F1** CinematicIntro 4s (déjà en ca2b932) + reduced-motion skip
+- [x] **F1bis** Background nature animé : 4 radial-gradient dots drift 60s + gradient body drift 45s, will-change GPU-hint, prefers-reduced-motion guard
+- [x] **F2** Parallax hero : `useScroll` + `useTransform` (yHeadline −60 / yOrb +120 / opacity 1→0.4)
+- [x] **F3** Reveal variants : fadeUp + slideInLeft + slideInRight + scaleIn + staggerParent (piliers alternés, actions stagger, comment scale)
+- [x] **F4** AnimatedCounter + section "On construit, pas à pas" : vraies données DB (15 missions · 45 aides · 30 FAQ · 1 user) via `/api/impact/public` (Cache-Control edge 60s + swr 300s) + migration 011 grant service_role profiles+faq_articles
+- [x] **F5** BreathOverlay 4-7-8 : 3 cycles = 57s, role="dialog" aria-modal, focus ref, ESC close, subtitles FR, bouton "Respire avec moi" sur rituel banner, prefers-reduced-motion skip animation
+- [x] **F6** i18n 16 langues : +breath (16 clés) +impact (6 clés) sur les 16 locales (fr+en natives, 14 fallback FR)
+- [x] **F7** A11y polish : `useReducedMotion` sur CinematicIntro/AnimatedCounter/HeroParallax/BreathOverlay + @media (prefers-reduced-motion: reduce) CSS
+- [x] **Tests** : `tests/p5-landing.spec.ts` 5 tests (API impact + section "On construit" + breath open/close/ESC + bg)
+- [x] **Régression full prod** : 93 passed + 1 flaky + 0 failed (p5-landing + vida-21-sim + p6-audit-vida + bloc-c)
+- [x] **Lighthouse** (median 5 runs, prod post-P5) :
+  - landing  : perf **93** / a11y **100** / best 100 / seo 100  (a11y +4 vs P6)
+  - pricing  : perf **97** / a11y 90 / best 100 / seo 100
+  - financer : perf **93** / a11y 100 / best 100 / seo 100
+  - aide     : perf **89** / a11y 94 / best 96 / seo 100  (1 pt sous seuil — LCP 3.5s causé par hydration client-side FAQ, pré-existant, non lié P5 ; CSS shrink commit c8afc9a n'a pas bougé cet indice, confirmant que la cause est architecturale côté /aide)
+  - login    : perf **94** / a11y 98 / best 100 / seo 100
+  - signup   : perf **93** / a11y 98 / best 100 / seo 100
+- [x] Deploy prod : commit c8afc9a → https://vida.purama.dev (dpl_post-P5)
 
 ### ✅ P6 — Audit + Tests (2026-04-22)
 - [x] Cleanup tests AKASHA-stale : `client-sim.spec.ts`, `p6-audit.spec.ts`, `local-audit.spec.ts` supprimés (attendaient 'VIDA AI', /dashboard/tools etc.)
