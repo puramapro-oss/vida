@@ -7,8 +7,10 @@ import {
   Leaf, Users, Wallet, Heart, Home, Briefcase, Baby,
   Accessibility, GraduationCap, UserCheck, MapPin,
   ArrowRight, ArrowLeft, Check, Download, ExternalLink, Sparkles,
+  Euro, TrendingUp, ChevronDown, ChevronUp,
 } from 'lucide-react'
 import { jsPDF } from 'jspdf'
+import { useAuth } from '@/hooks/useAuth'
 
 type SituationTag =
   | 'etudiant' | 'demandeur_emploi' | 'salarie' | 'independant' | 'retraite'
@@ -27,6 +29,13 @@ interface Aide {
   url_officielle: string
   description: string
   cumulable: boolean
+  // Optional OpenFisca-enriched fields (present when /api/aides/search used)
+  montant_affiche?: number
+  montant_simule?: number | null
+  source_montant?: 'openfisca' | 'estimatif'
+  openfisca_variable?: string | null
+  legifrance_refs?: string[]
+  simulation_possible?: boolean
 }
 
 const SITUATIONS: { tag: SituationTag; label: string; icon: typeof Users; hint: string }[] = [
@@ -43,6 +52,24 @@ const SITUATIONS: { tag: SituationTag; label: string; icon: typeof Users; hint: 
   { tag: 'locataire', label: 'Locataire', icon: Home, hint: 'Privé, social, résidence' },
   { tag: 'proprietaire', label: 'Propriétaire', icon: Home, hint: 'Résidence principale' },
   { tag: 'zfrr', label: 'Zone Ruralité (ZFRR)', icon: MapPin, hint: 'Commune en Zone France Ruralité Revitalisation' },
+]
+
+const REGIONS: { value: string; label: string }[] = [
+  { value: '',                       label: 'Non précisée' },
+  { value: 'ile-de-france',          label: 'Île-de-France' },
+  { value: 'auvergne-rhone-alpes',   label: 'Auvergne-Rhône-Alpes' },
+  { value: 'nouvelle-aquitaine',     label: 'Nouvelle-Aquitaine' },
+  { value: 'occitanie',              label: 'Occitanie' },
+  { value: 'hauts-de-france',        label: 'Hauts-de-France' },
+  { value: 'grand-est',              label: 'Grand Est' },
+  { value: 'provence-alpes-cote-d-azur', label: 'PACA' },
+  { value: 'pays-de-la-loire',       label: 'Pays de la Loire' },
+  { value: 'bretagne',               label: 'Bretagne' },
+  { value: 'normandie',              label: 'Normandie' },
+  { value: 'bourgogne-franche-comte', label: 'Bourgogne-Franche-Comté' },
+  { value: 'centre-val-de-loire',    label: 'Centre-Val de Loire' },
+  { value: 'corse',                  label: 'Corse' },
+  { value: 'outre-mer',              label: 'Outre-mer' },
 ]
 
 const TYPE_COLORS: Record<string, string> = {
@@ -66,16 +93,34 @@ function formatMontant(a: Aide): string {
 }
 
 export default function FinancerPage() {
+  const { user } = useAuth()
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
   const [situation, setSituation] = useState<SituationTag[]>([])
   const [aides, setAides] = useState<Aide[]>([])
   const [cumul, setCumul] = useState(0)
+  const [simulationOk, setSimulationOk] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Optional precision fields (OpenFisca-enabled when user authenticated)
+  const [advanced, setAdvanced] = useState(false)
+  const [age, setAge] = useState<string>('')
+  const [revenus, setRevenus] = useState<string>('')
+  const [enfants, setEnfants] = useState<string>('')
+  const [loyer, setLoyer] = useState<string>('')
+  const [region, setRegion] = useState<string>('')
 
   const toggleTag = (t: SituationTag) => {
     setSituation(s => s.includes(t) ? s.filter(x => x !== t) : [...s, t])
   }
+
+  const toInt = (s: string): number | undefined => {
+    const n = parseInt(s, 10)
+    return Number.isFinite(n) && n >= 0 ? n : undefined
+  }
+
+  const hasAnyPrecision = (): boolean =>
+    Boolean(toInt(age) ?? toInt(revenus) ?? toInt(enfants) ?? toInt(loyer) ?? region)
 
   const submitMatch = async () => {
     if (situation.length === 0) {
@@ -84,11 +129,41 @@ export default function FinancerPage() {
     }
     setError(null)
     setLoading(true)
+
+    const precisionProfile = {
+      situation,
+      age:              toInt(age),
+      revenus_mensuels: toInt(revenus),
+      enfants:          toInt(enfants),
+      loyer_mensuel:    toInt(loyer),
+      region:           region || undefined,
+    }
+
+    // Route selection : OpenFisca si user auth + au moins un champ précis fourni
+    const useOpenFisca = Boolean(user) && hasAnyPrecision()
+
     try {
+      if (useOpenFisca) {
+        const res = await fetch('/api/aides/search', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(precisionProfile),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setAides(data.aides)
+          setCumul(data.cumul_estime)
+          setSimulationOk(data.simulation_ok === true)
+          setStep(2)
+          return
+        }
+        // Fallback silencieux si auth expirée ou 503 OpenFisca — on enchaîne sur /match
+      }
+
       const res = await fetch('/api/financer/match', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ situation }),
+        body: JSON.stringify(precisionProfile),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -97,6 +172,7 @@ export default function FinancerPage() {
       }
       setAides(data.aides)
       setCumul(data.cumul_estime)
+      setSimulationOk(false)
       setStep(2)
     } catch {
       setError('Connexion impossible. Vérifie ton réseau et réessaie.')
@@ -244,6 +320,136 @@ export default function FinancerPage() {
                       </button>
                     )
                   })}
+                </div>
+
+                {/* Advanced — précision OpenFisca (auth only) */}
+                <div className="mt-8 border-t border-[var(--border)] pt-6">
+                  <button
+                    type="button"
+                    onClick={() => setAdvanced(v => !v)}
+                    data-testid="financer-toggle-advanced"
+                    className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  >
+                    <TrendingUp className="h-4 w-4 text-[var(--emerald)]" />
+                    <span className="font-medium">Affiner avec mes chiffres réels</span>
+                    <span className="text-xs text-[var(--text-muted)]">(simulation officielle OpenFisca)</span>
+                    {advanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {advanced && (
+                      <motion.div
+                        key="adv"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
+                          <label className="block">
+                            <span className="text-xs text-[var(--text-muted)] mb-1.5 block flex items-center gap-1.5">
+                              <Users className="h-3 w-3" /> Âge
+                            </span>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min={15}
+                              max={110}
+                              value={age}
+                              onChange={e => setAge(e.target.value)}
+                              placeholder="ex : 34"
+                              data-testid="financer-age"
+                              className="w-full rounded-xl bg-white/5 border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--emerald)] focus:bg-white/[0.07] transition-colors"
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="text-xs text-[var(--text-muted)] mb-1.5 block flex items-center gap-1.5">
+                              <Euro className="h-3 w-3" /> Revenus mensuels nets (€)
+                            </span>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min={0}
+                              max={20000}
+                              value={revenus}
+                              onChange={e => setRevenus(e.target.value)}
+                              placeholder="ex : 1450"
+                              data-testid="financer-revenus"
+                              className="w-full rounded-xl bg-white/5 border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--emerald)] focus:bg-white/[0.07] transition-colors"
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="text-xs text-[var(--text-muted)] mb-1.5 block flex items-center gap-1.5">
+                              <Baby className="h-3 w-3" /> Enfants à charge
+                            </span>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min={0}
+                              max={20}
+                              value={enfants}
+                              onChange={e => setEnfants(e.target.value)}
+                              placeholder="ex : 2"
+                              data-testid="financer-enfants"
+                              className="w-full rounded-xl bg-white/5 border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--emerald)] focus:bg-white/[0.07] transition-colors"
+                            />
+                          </label>
+
+                          <label className="block">
+                            <span className="text-xs text-[var(--text-muted)] mb-1.5 block flex items-center gap-1.5">
+                              <Home className="h-3 w-3" /> Loyer mensuel (€)
+                            </span>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min={0}
+                              max={5000}
+                              value={loyer}
+                              onChange={e => setLoyer(e.target.value)}
+                              placeholder="ex : 650"
+                              data-testid="financer-loyer"
+                              className="w-full rounded-xl bg-white/5 border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--emerald)] focus:bg-white/[0.07] transition-colors"
+                            />
+                          </label>
+
+                          <label className="block sm:col-span-2">
+                            <span className="text-xs text-[var(--text-muted)] mb-1.5 block flex items-center gap-1.5">
+                              <MapPin className="h-3 w-3" /> Région
+                            </span>
+                            <select
+                              value={region}
+                              onChange={e => setRegion(e.target.value)}
+                              data-testid="financer-region"
+                              className="w-full rounded-xl bg-white/5 border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--emerald)] focus:bg-white/[0.07] transition-colors"
+                            >
+                              {REGIONS.map(r => (
+                                <option key={r.value} value={r.value} className="bg-[#0A0A0F]">{r.label}</option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+
+                        {!user && hasAnyPrecision() && (
+                          <p className="mt-4 text-xs text-[var(--text-muted)] bg-white/[0.03] border border-[var(--border)] rounded-xl p-3 flex items-start gap-2">
+                            <Sparkles className="h-4 w-4 text-[var(--emerald)] shrink-0 mt-0.5" />
+                            <span>
+                              <Link href="/signup" className="text-[var(--emerald)] underline underline-offset-2">Crée un compte gratuit</Link> pour débloquer la simulation officielle OpenFisca — sinon on affiche les plafonds estimatifs.
+                            </span>
+                          </p>
+                        )}
+
+                        {user && hasAnyPrecision() && (
+                          <p className="mt-4 text-xs text-[var(--emerald)] bg-[var(--emerald)]/10 border border-[var(--emerald)]/30 rounded-xl p-3 flex items-start gap-2">
+                            <Check className="h-4 w-4 shrink-0 mt-0.5" />
+                            <span>Simulation OpenFisca activée — tes montants seront calculés au plus juste.</span>
+                          </p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {error && (
