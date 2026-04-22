@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Syne, Inter, JetBrains_Mono } from 'next/font/google'
+import { Syne, Inter } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 import { Toaster } from 'sonner'
@@ -18,12 +18,6 @@ const syne = Syne({
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-body',
-  display: 'swap',
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
   display: 'swap',
 })
 
@@ -76,7 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const messages = await getMessages()
 
   return (
-    <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${syne.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${syne.variable} ${inter.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{

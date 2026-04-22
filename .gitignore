@@ -9,3 +9,5 @@ playwright-report
 .DS_Store
 tsconfig.tsbuildinfo
 CLAUDE.md
+.lighthouse-verify/
+.lighthouse-p5/
