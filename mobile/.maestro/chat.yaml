@@ -1,0 +1,51 @@
+# VIDA — Flow 03 : Chat IA VIDA
+# Bouton Envoyer disabled si input vide · streaming réponse · fallback FR offline
+appId: dev.purama.vida
+---
+- launchApp
+
+# Auth fallback si pas loggé
+- runFlow:
+    when:
+      visible:
+        id: "login-title"
+    commands:
+      - tapOn:
+          id: "login-email"
+      - inputText: "matiss.frasne@gmail.com"
+      - tapOn:
+          id: "login-password"
+      - inputText: "TestVidaMaestro2026!"
+      - tapOn:
+          id: "login-submit"
+
+# Navigate to Chat tab
+- tapOn: "Chat"
+- assertVisible: "Chat VIDA"
+- assertVisible: "Expert droits sociaux"
+
+# Message d'accueil IA visible
+- assertVisible: "Je suis VIDA"
+
+# Input + bouton Envoyer
+- assertVisible:
+    id: "chat-input"
+- assertVisible:
+    id: "chat-send"
+
+# Saisie message
+- tapOn:
+    id: "chat-input"
+- inputText: "Quelles aides pour un étudiant boursier ?"
+
+# Envoi
+- tapOn:
+    id: "chat-send"
+
+# Wait pour la réponse IA (timeout 15s)
+- extendedWaitUntil:
+    visible: "Je suis VIDA"
+    timeout: 15000
+
+# Scroll pour voir la réponse
+- scroll

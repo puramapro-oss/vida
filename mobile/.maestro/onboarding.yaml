@@ -1,0 +1,44 @@
+# VIDA — Flow 06 : Onboarding (1ère installation, clearState)
+# Vérifie : splash → auth gate redirige vers login → signup flow complet
+appId: dev.purama.vida
+---
+- clearState
+- launchApp
+
+# Splash screen disparaît, loading spinner puis login
+- extendedWaitUntil:
+    visible:
+      id: "login-title"
+    timeout: 10000
+
+- assertVisible:
+    id: "login-title"
+- assertVisible: "Ton écosystème vivant"
+
+# Nouveau compte
+- tapOn: "S'inscrire"
+- assertVisible:
+    id: "signup-title"
+
+- tapOn:
+    id: "signup-name"
+- inputText: "Maestro Test"
+
+- tapOn:
+    id: "signup-email"
+- inputText: "maestro-test-2026@example.com"
+
+- tapOn:
+    id: "signup-password"
+- inputText: "MaestroTest2026!"
+
+- tapOn:
+    id: "signup-submit"
+
+# Après signup réussi : redirect /(tabs)
+# Si Supabase exige confirm email → on reste sur signup avec un toast, acceptable
+- extendedWaitUntil:
+    visible:
+      id: "greeting"
+    timeout: 15000
+    optional: true

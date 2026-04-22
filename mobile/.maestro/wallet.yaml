@@ -1,0 +1,39 @@
+# VIDA — Flow 04 : Wallet (solde € + Purama Points + tier)
+appId: dev.purama.vida
+---
+- launchApp
+
+- runFlow:
+    when:
+      visible:
+        id: "login-title"
+    commands:
+      - tapOn:
+          id: "login-email"
+      - inputText: "matiss.frasne@gmail.com"
+      - tapOn:
+          id: "login-password"
+      - inputText: "TestVidaMaestro2026!"
+      - tapOn:
+          id: "login-submit"
+
+- tapOn: "Wallet"
+- assertVisible: "Wallet"
+
+# Solde wallet €
+- assertVisible:
+    id: "wallet-balance"
+- assertVisible: "Retrait dès 5€"
+
+# Purama Points
+- assertVisible:
+    id: "wallet-points"
+- assertVisible: "Purama Points"
+- assertVisible: "1 pt = 0,01 €"
+
+# Info block
+- assertVisible: "Missions réelles"
+- assertVisible: "Parrainage"
+
+# Pull-to-refresh (simulation scroll)
+- scroll

@@ -1,0 +1,58 @@
+# VIDA — Flow 08 : Responsive multi-device
+# Maestro détecte automatiquement l'écran. Ce flow vérifie que les éléments clés
+# restent visibles sur iPhone SE (375), iPhone 16 Pro Max, iPad 12.9.
+# Lancer avec : maestro test --device <id> .maestro/responsive.yaml
+appId: dev.purama.vida
+---
+- launchApp
+
+- runFlow:
+    when:
+      visible:
+        id: "login-title"
+    commands:
+      - tapOn:
+          id: "login-email"
+      - inputText: "matiss.frasne@gmail.com"
+      - tapOn:
+          id: "login-password"
+      - inputText: "TestVidaMaestro2026!"
+      - tapOn:
+          id: "login-submit"
+
+# Dashboard : zéro overflow, tous les textes lisibles
+- assertVisible:
+    id: "greeting"
+- assertVisible: "On construit, pas à pas."
+
+# Grid stats 2 colonnes même sur petit écran (flex-wrap avec width: 48%)
+- assertVisible: "missions réelles"
+- assertVisible: "aides recensées"
+- assertVisible: "réponses claires"
+- assertVisible: "graines plantées"
+
+# Scroll bottom : footer / tab bar toujours accessible
+- scroll
+- scroll
+- scroll
+
+# Nav tabs : 4 tabs accessibles, pas tronqués
+- assertVisible: "Accueil"
+- assertVisible: "Chat"
+- assertVisible: "Wallet"
+- assertVisible: "Profil"
+
+# Tap chaque tab pour vérifier qu'elles répondent
+- tapOn: "Chat"
+- assertVisible: "Chat VIDA"
+
+- tapOn: "Wallet"
+- assertVisible: "Wallet"
+
+- tapOn: "Profil"
+- assertVisible:
+    id: "profile-name"
+
+- tapOn: "Accueil"
+- assertVisible:
+    id: "greeting"

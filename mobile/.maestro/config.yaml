@@ -1,0 +1,21 @@
+# VIDA — Maestro shared config
+# Invoqué par chaque flow via `- runFlow: config.yaml` (shared setup)
+#
+# appId mapping :
+#   - iOS    : dev.purama.vida (bundleIdentifier)
+#   - Android: dev.purama.vida (package)
+#
+# Usage :
+#   cd mobile
+#   maestro test .maestro/auth.yaml
+#   maestro test .maestro  # all flows
+#
+# CI/CD (post-EAS build) :
+#   eas build --platform ios --profile preview
+#   maestro cloud --apiKey $MAESTRO_API_KEY ios-build.ipa .maestro/
+appId: dev.purama.vida
+---
+# Reset app state between flows
+- clearState
+- launchApp:
+    appId: dev.purama.vida
