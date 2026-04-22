@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import { useAuth } from '@/hooks/useAuth'
+import FinancerDisclaimer from '@/components/shared/FinancerDisclaimer'
 
 type SituationTag =
   | 'etudiant' | 'demandeur_emploi' | 'salarie' | 'independant' | 'retraite'
@@ -277,6 +278,7 @@ export default function FinancerPage() {
 
   return (
     <>
+      <FinancerDisclaimer />
       <div className="vida-nature-bg" />
       <div className="aurora" />
 
