@@ -296,6 +296,24 @@ export async function POST(req: NextRequest) {
     .filter((a) => a.cumulable)
     .reduce((sum, a) => sum + a.montant_affiche, 0)
 
+  // Traçabilité (best-effort — await pour garantir l'exécution en serverless)
+  const { error: simError } = await service.from('aide_simulations').insert({
+    user_id:          user.id,
+    profil_hash:      hash,
+    situation:        profil.situation,
+    age:              profil.age            ?? null,
+    revenus_mensuels: profil.revenus_mensuels ?? null,
+    enfants:          profil.enfants        ?? null,
+    loyer_mensuel:    profil.loyer_mensuel  ?? null,
+    region:           profil.region         ?? null,
+    aides_count:      aidesEnrichies.length,
+    cumul_estime,
+    simulation_ok:    simulation.simule,
+    cache_hit:        cacheHit,
+    source:           'openfisca',
+  })
+  if (simError) console.error('[/api/aides/search] sim log:', simError.message)
+
   return NextResponse.json({
     count:           aidesEnrichies.length,
     cumul_estime,
