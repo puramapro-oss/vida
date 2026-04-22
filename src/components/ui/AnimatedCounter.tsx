@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useInView, motion } from 'framer-motion'
+import { useInView, motion, useReducedMotion } from 'framer-motion'
 
 interface AnimatedCounterProps {
   value: number
@@ -22,10 +22,15 @@ export default function AnimatedCounter({
 }: AnimatedCounterProps) {
   const ref = useRef<HTMLSpanElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-50px' })
-  const [display, setDisplay] = useState(0)
+  const reduced = useReducedMotion()
+  const [display, setDisplay] = useState(reduced ? value : 0)
 
   useEffect(() => {
     if (!isInView) return
+    if (reduced) {
+      setDisplay(value)
+      return
+    }
 
     let start = 0
     const startTime = performance.now()
@@ -45,7 +50,7 @@ export default function AnimatedCounter({
     }
 
     requestAnimationFrame(tick)
-  }, [isInView, value, duration])
+  }, [isInView, value, duration, reduced])
 
   return (
     <motion.span

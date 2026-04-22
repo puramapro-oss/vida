@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion'
 import dynamic from 'next/dynamic'
 const CinematicIntro = dynamic(() => import('@/components/shared/CinematicIntro'), { ssr: false })
+const BreathOverlay = dynamic(() => import('@/components/shared/BreathOverlay'), { ssr: false })
+import AnimatedCounter from '@/components/ui/AnimatedCounter'
 import {
   Leaf,
   Heart,
@@ -157,6 +159,148 @@ const fadeUp = {
   },
 }
 
+const slideInLeft = {
+  hidden: { opacity: 0, x: -40, filter: 'blur(4px)' },
+  visible: {
+    opacity: 1,
+    x: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const },
+  },
+}
+
+const slideInRight = {
+  hidden: { opacity: 0, x: 40, filter: 'blur(4px)' },
+  visible: {
+    opacity: 1,
+    x: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const },
+  },
+}
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.92, filter: 'blur(4px)' },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    filter: 'blur(0px)',
+    transition: { duration: 0.65, ease: [0.34, 1.2, 0.64, 1] as const },
+  },
+}
+
+const staggerParent = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.12, delayChildren: 0.08 } },
+}
+
+function HeroParallax({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLElement>(null)
+  const reduced = useReducedMotion()
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start start', 'end start'],
+  })
+  const yHeadline = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -60])
+  const yOrb = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 120])
+  const opacityHeadline = useTransform(scrollYProgress, [0, 0.8], [1, reduced ? 1 : 0.4])
+
+  return (
+    <section
+      ref={ref}
+      className="relative min-h-screen flex items-center justify-center px-4 pt-24 pb-16 overflow-hidden"
+    >
+      {/* Orb derrière — parallax inverse */}
+      <motion.div
+        aria-hidden="true"
+        style={{ y: yOrb }}
+        className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 mx-auto h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.18)_0%,transparent_60%)] blur-[40px]"
+      />
+      <motion.div
+        style={{ y: yHeadline, opacity: opacityHeadline }}
+        className="relative z-10 max-w-4xl mx-auto text-center w-full"
+      >
+        {children}
+      </motion.div>
+    </section>
+  )
+}
+
+function ImpactSection() {
+  const [data, setData] = useState<{
+    missions_count: number
+    aides_count: number
+    faq_count: number
+    users_count: number
+  } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/impact/public', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d) setData(d)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  if (!data) return null
+
+  const stats = [
+    { value: data.missions_count, label: 'missions réelles', color: 'var(--emerald)' },
+    { value: data.aides_count, label: 'aides recensées', color: 'var(--sage)' },
+    { value: data.faq_count, label: 'réponses claires', color: 'var(--emerald)' },
+    { value: data.users_count, label: 'graines plantées', color: 'var(--sage)' },
+  ]
+
+  return (
+    <section className="py-24 px-4">
+      <div className="max-w-5xl mx-auto">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={fadeUp}
+          className="text-center mb-12"
+        >
+          <p className="text-sm uppercase tracking-[0.2em] text-[var(--emerald)] mb-4">
+            Ensemble
+          </p>
+          <h2 className="font-[family-name:var(--font-display)] text-3xl md:text-5xl font-light leading-[1.15]">
+            On construit, <span className="text-[var(--emerald)]">pas à pas.</span>
+          </h2>
+        </motion.div>
+
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-60px' }}
+          variants={staggerParent}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        >
+          {stats.map((s) => (
+            <motion.div
+              key={s.label}
+              variants={scaleIn}
+              className="glass-card rounded-3xl p-6 md:p-8 text-center"
+            >
+              <div className="impact-counter text-4xl md:text-5xl mb-2">
+                <AnimatedCounter value={s.value} duration={1.6} />
+              </div>
+              <p className="text-xs md:text-sm text-[var(--text-secondary)] uppercase tracking-[0.15em]">
+                {s.label}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
 const PILIERS = [
   {
     icon: BookHeart,
@@ -210,9 +354,12 @@ const FAQ = [
 ]
 
 export default function LandingPage() {
+  const [breathOpen, setBreathOpen] = useState(false)
+
   return (
     <>
       <CinematicIntro />
+      <BreathOverlay open={breathOpen} onClose={() => setBreathOpen(false)} />
       <div className="vida-nature-bg" />
       <div className="aurora" />
 
@@ -220,12 +367,11 @@ export default function LandingPage() {
 
       <main className="relative">
         {/* HERO */}
-        <section className="relative min-h-screen flex items-center justify-center px-4 pt-24 pb-16">
+        <HeroParallax>
           <motion.div
             initial="hidden"
             animate="visible"
             variants={fadeUp}
-            className="max-w-4xl mx-auto text-center"
           >
             <div className="vida-chip mb-8 mx-auto inline-flex">
               <span className="vida-pulse-dot" />
@@ -281,7 +427,7 @@ export default function LandingPage() {
               ))}
             </div>
           </motion.div>
-        </section>
+        </HeroParallax>
 
         {/* MANIFESTE */}
         <section id="manifeste" className="py-24 px-4">
@@ -327,15 +473,17 @@ export default function LandingPage() {
               </h2>
             </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-80px' }}
+              variants={staggerParent}
+              className="grid md:grid-cols-3 gap-6"
+            >
               {PILIERS.map((p, i) => (
                 <motion.div
                   key={p.title}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
-                  variants={fadeUp}
-                  transition={{ delay: i * 0.1 }}
+                  variants={i === 0 ? slideInLeft : i === 2 ? slideInRight : fadeUp}
                   className="glass-card p-8 rounded-3xl hover:bg-[var(--bg-card-hover)] transition-all"
                 >
                   <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[var(--emerald)]/20 to-[var(--sage)]/10 flex items-center justify-center mb-6">
@@ -347,9 +495,12 @@ export default function LandingPage() {
                   <p className="text-[var(--text-secondary)] leading-relaxed">{p.desc}</p>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
+
+        {/* IMPACT — compteurs réels DB */}
+        <ImpactSection />
 
         {/* ACTIONS GRID */}
         <section className="py-24 px-4">
@@ -369,15 +520,17 @@ export default function LandingPage() {
               </h2>
             </motion.div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {ACTIONS.map((a, i) => (
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-60px' }}
+              variants={staggerParent}
+              className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {ACTIONS.map((a) => (
                 <motion.div
                   key={a.title}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
-                  variants={fadeUp}
-                  transition={{ delay: (i % 3) * 0.08 }}
+                  variants={scaleIn}
                   className="glass-card p-6 rounded-3xl group"
                 >
                   <div className="flex items-start gap-4">
@@ -395,7 +548,7 @@ export default function LandingPage() {
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
@@ -417,15 +570,17 @@ export default function LandingPage() {
               </h2>
             </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              {COMMENT.map((s, i) => (
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-60px' }}
+              variants={staggerParent}
+              className="grid md:grid-cols-3 gap-6"
+            >
+              {COMMENT.map((s) => (
                 <motion.div
                   key={s.num}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
-                  variants={fadeUp}
-                  transition={{ delay: i * 0.12 }}
+                  variants={scaleIn}
                   className="glass-card p-8 rounded-3xl relative overflow-hidden"
                 >
                   <div className="absolute -top-2 -right-2 font-[family-name:var(--font-display)] text-7xl font-bold text-[var(--emerald)]/10 select-none">
@@ -442,7 +597,7 @@ export default function LandingPage() {
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
@@ -467,10 +622,18 @@ export default function LandingPage() {
               <br />
               <span className="gradient-text font-semibold">au même instant.</span>
             </h2>
-            <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">
+            <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto mb-8">
               Chaque dimanche soir, la communauté VIDA se synchronise pour 9 minutes de respiration,
               gratitude et intention partagée. Tu n&apos;es jamais seul.
             </p>
+            <button
+              type="button"
+              onClick={() => setBreathOpen(true)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--emerald)]/40 bg-[var(--emerald)]/10 px-6 py-3 text-sm font-medium text-[var(--emerald)] hover:bg-[var(--emerald)]/20 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--emerald)]"
+            >
+              <Wind className="h-4 w-4" aria-hidden="true" />
+              Respire avec moi — 57 secondes
+            </button>
           </motion.div>
         </section>
 
