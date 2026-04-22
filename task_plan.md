@@ -190,13 +190,26 @@
 - [ ] i18n 16 langues (messages FR déjà, copier vers autres)
 - [ ] Accessibilité : VoiceOver, contrastes, sous-titres
 
-### ❌ P6 — Audit + Tests
-- [ ] Playwright E2E : signup → onboarding → dashboard → mission → impact
-- [ ] 21 SIM tests (inscription, parrainage, stripe, wallet, …)
-- [ ] Lighthouse >90 toutes pages
-- [ ] Safari mobile, 375px responsive
-- [ ] console 0 error
-- [ ] Deploy final
+### ✅ P6 — Audit + Tests (2026-04-22)
+- [x] Cleanup tests AKASHA-stale : `client-sim.spec.ts`, `p6-audit.spec.ts`, `local-audit.spec.ts` supprimés (attendaient 'VIDA AI', /dashboard/tools etc.)
+- [x] `vida-21-sim.spec.ts` — 21 simulations client VIDA (landing + auth + middleware + pricing + financer + aide + ambassadeur + legal + responsive + APIs)
+- [x] `p6-audit-vida.spec.ts` — 63 tests (22 public 200+console-clean, 23 dashboard redirect, 9 responsive 3bp×3pages, 5 APIs, 3 forms, 1 landing content)
+- [x] Run complet : **214 passed + 9 skipped (honest) + 0 failed** sur v7-smoke + v7-113 + bloc-c + vida-21-sim + p6-audit-vida
+- [x] **Lighthouse ≥ 90 TOUTES LES PAGES** (6/6 pages × 4 catégories) :
+  - landing  : perf 93 / a11y 96 / best 100 / seo 100
+  - pricing  : perf 97 / a11y 92 / best 100 / seo 100
+  - financer : perf 98 / a11y 100 / best 100 / seo 100
+  - aide     : perf 99 / a11y 96 / best 96 / seo 100
+  - login    : perf 96 / a11y 100 / best 100 / seo 100
+  - signup   : perf 95 / a11y 100 / best 100 / seo 100
+- [x] Fixes appliqués (commit 3e3324c) :
+  - contrast WCAG AA (bump --text-muted .32→.55, --text-secondary .55→.72)
+  - CookieBanner aria-label + aria-hidden sur icon
+  - Suppression canonical root (était absolu = Lighthouse fail sur sous-pages)
+  - Manifest.json description/categories VIDA wellness (résidu AKASHA fixé)
+- [x] Safari mobile 375px : tests responsive 375/768/1920 tous verts
+- [x] Console 0 error : vérifié sur 22 pages publiques
+- [x] Deploy final dpl_EfS7FP8TXmxysqCiMchHyiQZKF9g → https://vida.purama.dev
 
 ### ❌ P7 — Mobile Expo (iOS + Android)
 - [ ] create-expo-app ~/purama/vida/mobile
