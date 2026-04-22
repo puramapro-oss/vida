@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { SUPER_ADMIN_EMAIL } from '@/lib/constants'
 
 export const runtime = 'nodejs'
 
@@ -10,6 +12,8 @@ const OPENFISCA_VARIABLES = [
   'rsa', 'aide_logement', 'als', 'prime_activite',
   'aah', 'cheque_energie', 'pension_invalidite',
 ]
+
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000 // 6h
 
 const profilSchema = z.object({
   situation:          z.array(z.enum([
@@ -109,6 +113,48 @@ interface OpenFiscaResult {
   simule: boolean
 }
 
+function hashProfil(profil: Profil): string {
+  const normalized = {
+    situation:        [...profil.situation].sort(),
+    age:              profil.age        ?? null,
+    revenus_mensuels: profil.revenus_mensuels ?? null,
+    enfants:          profil.enfants    ?? null,
+    loyer_mensuel:    profil.loyer_mensuel    ?? null,
+    region:           (profil.region ?? '').toLowerCase().trim() || null,
+  }
+  return createHash('sha256').update(JSON.stringify(normalized)).digest('hex')
+}
+
+async function getCachedOpenFisca(
+  service: ReturnType<typeof createServiceClient>,
+  hash: string,
+): Promise<OpenFiscaResult | null> {
+  const cutoff = new Date(Date.now() - CACHE_TTL_MS).toISOString()
+  const { data } = await service
+    .from('openfisca_cache')
+    .select('result, created_at')
+    .eq('profil_hash', hash)
+    .gte('created_at', cutoff)
+    .maybeSingle()
+
+  if (!data) return null
+  const result = data.result as OpenFiscaResult
+  if (!result || typeof result.simule !== 'boolean') return null
+  return result
+}
+
+async function setCachedOpenFisca(
+  service: ReturnType<typeof createServiceClient>,
+  hash: string,
+  result: OpenFiscaResult,
+): Promise<void> {
+  // Upsert — refresh created_at si même profil re-simulé
+  await service.from('openfisca_cache').upsert(
+    { profil_hash: hash, result, created_at: new Date().toISOString() },
+    { onConflict: 'profil_hash' },
+  )
+}
+
 async function runOpenFiscaSimulation(profil: Profil): Promise<OpenFiscaResult> {
   const situation = buildOpenFiscaSituation(profil)
   const today     = new Date()
@@ -182,6 +228,14 @@ export async function POST(req: NextRequest) {
   const profil = parsed.data
   const service = createServiceClient()
 
+  // Super-admin skip cache (debug flow) — détecte email DB sans bloquer si absent
+  const { data: profileRow } = await service
+    .from('profiles')
+    .select('email')
+    .eq('id', user.id)
+    .maybeSingle()
+  const skipCache = profileRow?.email === SUPER_ADMIN_EMAIL
+
   // 1. Requête statique Supabase — aides éligibles selon profil
   const { data: aides, error } = await service
     .from('aides')
@@ -197,12 +251,31 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // 2. OpenFisca simulation — best-effort, fallback silencieux sur erreur
+  // 2. OpenFisca simulation — check cache d'abord (6h TTL), fallback API, fallback silencieux
+  const hash = hashProfil(profil)
   let simulation: OpenFiscaResult = { montants: {}, simule: false }
-  try {
-    simulation = await runOpenFiscaSimulation(profil)
-  } catch {
-    // API unavailable — on continue avec montants statiques
+  let cacheHit = false
+
+  if (!skipCache) {
+    const cached = await getCachedOpenFisca(service, hash).catch(() => null)
+    if (cached) {
+      simulation = cached
+      cacheHit   = true
+    }
+  }
+
+  if (!cacheHit) {
+    try {
+      simulation = await runOpenFiscaSimulation(profil)
+      // Cache uniquement les résultats réussis (sinon on cache les 503)
+      if (simulation.simule) {
+        setCachedOpenFisca(service, hash, simulation).catch(() => {
+          // Best-effort — ignore silencieusement si cache DB down
+        })
+      }
+    } catch {
+      // API unavailable — on continue avec montants statiques
+    }
   }
 
   // 3. Enrichir les aides avec montants simulés quand disponible
@@ -227,6 +300,7 @@ export async function POST(req: NextRequest) {
     count:           aidesEnrichies.length,
     cumul_estime,
     simulation_ok:   simulation.simule,
+    cache_hit:       cacheHit,
     aides:           aidesEnrichies,
   })
 }
