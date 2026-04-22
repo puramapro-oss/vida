@@ -7,7 +7,7 @@ import {
   Leaf, Users, Wallet, Heart, Home, Briefcase, Baby,
   Accessibility, GraduationCap, UserCheck, MapPin,
   ArrowRight, ArrowLeft, Check, Download, ExternalLink, Sparkles,
-  Euro, TrendingUp, ChevronDown, ChevronUp,
+  Euro, TrendingUp, ChevronDown, ChevronUp, Calculator, BookOpen,
 } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import { useAuth } from '@/hooks/useAuth'
@@ -87,9 +87,16 @@ const TYPE_COLORS: Record<string, string> = {
 }
 
 function formatMontant(a: Aide): string {
-  if (a.montant_max === 0) return 'Avantage en nature'
+  const montant = a.montant_affiche ?? a.montant_max
+  if (montant === 0) return 'Avantage en nature'
   const suf = a.periodicite === 'mensuelle' ? '/an (en cumulé)' : a.periodicite === 'annuelle' ? '/an' : 'en une fois'
-  return `jusqu'à ${a.montant_max.toLocaleString('fr-FR')}€ ${suf}`
+  const prefix = a.source_montant === 'openfisca' ? '' : 'jusqu\'à '
+  return `${prefix}${montant.toLocaleString('fr-FR')}€ ${suf}`
+}
+
+function legifranceSearchUrl(ref: string): string {
+  // "Art. L262-1 Code de l'action sociale et des familles" → search Legifrance
+  return `https://www.legifrance.gouv.fr/search/code?query=${encodeURIComponent(ref)}`
 }
 
 export default function FinancerPage() {
@@ -205,14 +212,22 @@ export default function FinancerPage() {
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(16, 185, 129)
     doc.text(`Cumul estimé : jusqu'à ${cumul.toLocaleString('fr-FR')} € par an`, margin, y)
-    y += 30
+    y += 18
+    if (simulationOk) {
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      doc.setTextColor(16, 185, 129)
+      doc.text('Montants calculés via OpenFisca — api.openfisca.fr', margin, y)
+      y += 14
+    }
+    y += 6
 
     doc.setDrawColor(16, 185, 129)
     doc.line(margin, y, pageW - margin, y)
     y += 20
 
     aides.forEach((a, i) => {
-      if (y > 720) { doc.addPage(); y = margin }
+      if (y > 700) { doc.addPage(); y = margin }
       doc.setTextColor(30, 30, 30)
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(12)
@@ -221,11 +236,30 @@ export default function FinancerPage() {
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(10)
       doc.setTextColor(80, 80, 80)
-      doc.text(`Organisme : ${a.organisme}  ·  ${formatMontant(a)}`, margin, y)
+      const sourceLabel = a.source_montant === 'openfisca' ? ' [OpenFisca]' : ''
+      doc.text(`Organisme : ${a.organisme}  ·  ${formatMontant(a)}${sourceLabel}`, margin, y)
       y += 14
       const desc = doc.splitTextToSize(a.description, pageW - margin * 2)
       doc.text(desc, margin, y)
       y += desc.length * 12 + 4
+
+      // Refs Legifrance dans le PDF
+      const refs = a.legifrance_refs ?? []
+      if (refs.length > 0) {
+        doc.setFontSize(9)
+        doc.setTextColor(120, 120, 120)
+        doc.text('Base légale :', margin, y)
+        y += 11
+        refs.forEach(ref => {
+          if (y > 780) { doc.addPage(); y = margin }
+          const refLines = doc.splitTextToSize(`  · ${ref}`, pageW - margin * 2 - 10)
+          doc.text(refLines, margin, y)
+          y += refLines.length * 10
+        })
+        y += 4
+        doc.setFontSize(10)
+      }
+
       doc.setTextColor(16, 185, 129)
       doc.textWithLink('→ Faire la demande officielle', margin, y, { url: a.url_officielle })
       y += 22
@@ -494,35 +528,89 @@ export default function FinancerPage() {
                   <p className="impact-counter text-4xl md:text-6xl mb-2">
                     {cumul.toLocaleString('fr-FR')} €
                   </p>
-                  <p className="text-sm text-[var(--text-muted)]">par an (montants plafonds, soumis à conditions)</p>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    par an — {simulationOk ? 'montants calculés par OpenFisca' : 'montants plafonds indicatifs'}
+                  </p>
+                  {simulationOk && (
+                    <div
+                      data-testid="financer-openfisca-banner"
+                      className="mt-4 inline-flex items-center gap-2 text-xs text-[var(--emerald)] bg-[var(--emerald)]/10 border border-[var(--emerald)]/30 rounded-full px-3 py-1.5"
+                    >
+                      <Calculator className="h-3.5 w-3.5" />
+                      <span>Simulation officielle OpenFisca — source : api.openfisca.fr</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {aides.map(a => (
-                    <div
-                      key={a.id}
-                      className={`glass-card rounded-2xl p-5 bg-gradient-to-br ${TYPE_COLORS[a.type_aide] ?? ''}`}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-3">
-                        <h3 className="font-semibold text-[var(--text-primary)] leading-tight">{a.nom}</h3>
-                        <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] bg-white/5 px-2 py-1 rounded-full shrink-0">
-                          {a.organisme}
-                        </span>
+                  {aides.map(a => {
+                    const isOpenFisca = a.source_montant === 'openfisca' && typeof a.montant_simule === 'number'
+                    const refs = a.legifrance_refs ?? []
+                    return (
+                      <div
+                        key={a.id}
+                        data-testid={`aide-card-${a.slug}`}
+                        className={`glass-card rounded-2xl p-5 bg-gradient-to-br ${TYPE_COLORS[a.type_aide] ?? ''}`}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-3">
+                          <h3 className="font-semibold text-[var(--text-primary)] leading-tight">{a.nom}</h3>
+                          <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] bg-white/5 px-2 py-1 rounded-full shrink-0">
+                            {a.organisme}
+                          </span>
+                        </div>
+                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">{a.description}</p>
+
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="text-sm font-semibold text-[var(--emerald)]">{formatMontant(a)}</span>
+                          {isOpenFisca ? (
+                            <span
+                              data-testid={`badge-openfisca-${a.slug}`}
+                              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-[var(--emerald)] bg-[var(--emerald)]/15 border border-[var(--emerald)]/30 rounded-full px-2 py-0.5 shrink-0"
+                            >
+                              <Calculator className="h-3 w-3" /> OpenFisca
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-[var(--text-muted)] bg-white/5 border border-[var(--border)] rounded-full px-2 py-0.5 shrink-0">
+                              Plafond estimatif
+                            </span>
+                          )}
+                        </div>
+
+                        {refs.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-white/5">
+                            <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] mb-1.5 flex items-center gap-1">
+                              <BookOpen className="h-3 w-3" /> Base légale
+                            </p>
+                            <ul className="space-y-0.5">
+                              {refs.map((ref, i) => (
+                                <li key={i}>
+                                  <a
+                                    href={legifranceSearchUrl(ref)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[11px] text-[var(--text-secondary)] hover:text-[var(--emerald)] transition-colors inline-flex items-center gap-1"
+                                  >
+                                    {ref} <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-end mt-3">
+                          <a
+                            href={a.url_officielle}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                          >
+                            Faire la demande <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
                       </div>
-                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">{a.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-[var(--emerald)]">{formatMontant(a)}</span>
-                        <a
-                          href={a.url_officielle}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                        >
-                          Source <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
