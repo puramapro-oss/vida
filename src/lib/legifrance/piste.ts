@@ -13,8 +13,11 @@
 
 import { LegifranceError, type LegifranceArticle, type PisteTokenResponse } from './types'
 
-const OAUTH_URL = 'https://oauth.piste.gouv.fr/api/oauth/token'
-const API_BASE = 'https://api.piste.gouv.fr/dila/legifrance/lf-engine-app'
+// URLs configurables via ENV — défaut sandbox (creds de test PISTE).
+// Pour passer en prod : PISTE_OAUTH_URL=https://oauth.piste.gouv.fr/api/oauth/token
+// +                      PISTE_API_BASE=https://api.piste.gouv.fr/dila/legifrance/lf-engine-app
+const OAUTH_URL = process.env.PISTE_OAUTH_URL || 'https://sandbox-oauth.piste.gouv.fr/api/oauth/token'
+const API_BASE = process.env.PISTE_API_BASE || 'https://sandbox-api.piste.gouv.fr/dila/legifrance/lf-engine-app'
 
 const REQUEST_TIMEOUT_MS = 15_000
 const TOKEN_REFRESH_BUFFER_MS = 60_000 // Refresh 1 min avant expiration
@@ -139,19 +142,26 @@ async function pisteRequest<T>(
  * Récupère un article Legifrance par son CID.
  * Endpoint : /consult/getArticle
  */
-export async function getArticleByCid(cid: string): Promise<LegifranceArticle | null> {
+export async function getArticleByCid(
+  cid: string,
+  knownCodeId?: string,
+  knownCodeName?: string,
+): Promise<LegifranceArticle | null> {
   interface PisteArticleResponse {
     article?: {
       id: string
       num?: string
       titre?: string
       texte?: string
-      dateDebut?: number  // Timestamp ms
+      texteHtml?: string
+      dateDebut?: number
       dateFin?: number
       etat?: string
       cid?: string
-      code?: string
-      codeNom?: string
+      nature?: string
+      context?: {
+        titresTM?: Array<{ titre?: string; cid?: string }>
+      }
     }
   }
 
@@ -159,20 +169,47 @@ export async function getArticleByCid(cid: string): Promise<LegifranceArticle | 
   if (!data.article) return null
 
   const a = data.article
+  const resolvedCid = a.cid || a.id
+
+  // Code LEGITEXT non renvoyé directement par getArticle — utiliser le code
+  // connu (contexte d'appel : listArticlesOfCode passe son codeId) ou extraire
+  // du premier titresTM (LEGISCTA000006112874 = C. trav., etc.)
+  const code = knownCodeId || ''
+  const codeNom = knownCodeName || a.context?.titresTM?.[0]?.titre?.trim() || ''
+
+  // Le champ `dateFin` de PISTE utilise souvent 32472144000000 (~an 3000) pour "en vigueur"
+  const dateFinMs = a.dateFin
+  const isStillInForce = !dateFinMs || dateFinMs > Date.now() + 365 * 10 * 24 * 3600 * 1000
+
   return {
-    cid: a.cid || a.id,
-    code: a.code || '',
-    code_nom: a.codeNom || '',
+    cid: resolvedCid,
+    code,
+    code_nom: codeNom,
     numero: a.num || '',
-    titre: a.titre || '',
-    texte: a.texte || '',
+    titre: a.num ? `Article ${a.num}` : '',
+    texte: a.texte || stripHtml(a.texteHtml || ''),
     date_debut: a.dateDebut ? new Date(a.dateDebut).toISOString() : null,
-    date_fin: a.dateFin ? new Date(a.dateFin).toISOString() : null,
+    date_fin: isStillInForce ? null : new Date(dateFinMs!).toISOString(),
     etat: normalizeEtat(a.etat),
-    url_legifrance: `https://www.legifrance.gouv.fr/codes/article_lc/${a.cid || a.id}`,
+    url_legifrance: `https://www.legifrance.gouv.fr/codes/article_lc/${resolvedCid}`,
     version_num: 1,
     last_synced_at: new Date().toISOString(),
   }
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<\/?p[^>]*>/g, '\n')
+    .replace(/<br\s*\/?>/g, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\s+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
 }
 
 /**
@@ -226,7 +263,9 @@ export async function searchInCode(
     }
   }
 
-  const articles = await Promise.all(cids.slice(0, pageSize).map(getArticleByCid))
+  const articles = await Promise.all(
+    cids.slice(0, pageSize).map((cid) => getArticleByCid(cid, codeId)),
+  )
   return articles.filter((a): a is LegifranceArticle => a !== null)
 }
 
@@ -255,7 +294,9 @@ export async function* listArticlesOfCode(
   const cids = extractAllCids(data)
   for (let i = 0; i < cids.length; i += pageSize) {
     const batchCids = cids.slice(i, i + pageSize)
-    const batch = await Promise.all(batchCids.map(getArticleByCid))
+    const batch = await Promise.all(
+      batchCids.map((cid) => getArticleByCid(cid, codeId)),
+    )
     yield batch.filter((a): a is LegifranceArticle => a !== null)
   }
 }
