@@ -175,7 +175,17 @@
 - [x] **C5 (2026-04-22 commit 822c994)** : Migration 010_aide_simulations. Table traçabilité (user_id nullable, profil_hash, aides_count, cumul, simulation_ok, cache_hit, source). Logs /api/aides/search + /api/financer/match. Function purge 6 mois RGPD.
 - [x] **C6 (2026-04-22 commit f194583)** : tests/bloc-c.spec.ts — 8 tests Playwright (C1+C2+C4+C8+D). 8/8 PASS prod. v7-smoke 18/18 toujours vert (0 régression).
 - [x] **C8 (2026-04-22 commit 6baf6fd)** : src/components/shared/FinancerDisclaimer.tsx — modal 1ère visite (TTL 365j localStorage). Conformité CNIL/DGCCRF. Pas d'organisme social + vérifier sur sites officiels.
-- [ ] **C7 (reporté V7.2)** : vraie API Legifrance DILA (OAuth2 piste.oauth2.piste.gouv.fr). LAW_CONTEXT reste hardcodé TS en V7.1 — fonctionne pour MVP mais articles figés à 2026.
+- [~] **C7 (en cours 2026-04-22)** : vraie API Legifrance dynamique — F1-F4 terminés + deployés
+  - [x] **C7-F1** migration 012 : `vida_sante.legifrance_articles` + `sync_legifrance_jobs` + `sync_legifrance_logs` (GIN FTS français, RLS, 3 tables)
+  - [x] **C7-F2** client PISTE OAuth2 (src/lib/legifrance/piste.ts) — getAccessToken cache 60min, getArticleByCid, searchInCode, listArticlesOfCode (async gen), retry exp backoff. 4/4 tests unit.
+  - [x] **C7-F3** fallback OpenData DILA (src/lib/legifrance/opendata.ts) — listAvailableDumps, downloadDump, extractDump, parseArticleXml. Deps : tar + fast-xml-parser. 3/3 tests avec dump mock.
+  - [x] **C7-F4** cache layered (src/lib/legifrance/cache.ts) — 5 tiers : L0 Upstash → L1 Postgres FTS → L3 PISTE → L5 LAW_CONTEXT_STATIC (12 articles hardcodés). Feature-flag UPSTASH_REDIS_REST_URL. 8/8 tests dont round-trip Postgres réel.
+  - [ ] **C7-F5** ingest + embed OpenAI → Pinecone namespace legifrance (~20K articles, $0.08 one-shot). Bloqué : PISTE_CLIENT_ID+SECRET à obtenir sur piste.gouv.fr.
+  - [ ] **C7-F6** POST /api/admin/sync-legifrance (super_admin auth + Zod + rate limit)
+  - [ ] **C7-F7** CRON hebdo dim 3h `/api/cron/sync-legifrance`
+  - [ ] **C7-F8** intégration /api/chat : remplace LAW_CONTEXT par searchArticles() cache layered. Feature-flag LEGIFRANCE_DYNAMIC=true.
+  - [ ] **C7-F9** admin UI /admin/legifrance (3 codes, last_sync_at, force sync)
+  - [ ] **C7-F10** tests E2E Playwright (chat RAG + fallback chaos + admin)
 
 ### ✅ Bloc D — IA droits sociaux (2026-04-21, commit d2ea0e2)
 - [x] /api/chat auto-inject Legifrance RAG quand isDroitsQuery=true
