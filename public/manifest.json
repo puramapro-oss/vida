@@ -1,15 +1,15 @@
 {
   "name": "VIDA",
   "short_name": "VIDA",
-  "description": "Le premier ecosysteme IA tout-en-un. 47+ outils pour 7€/mois.",
+  "description": "L'écosystème vivant qui transforme chaque action en impact réel. Santé, bien-être, communauté.",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#03040a",
+  "background_color": "#030806",
   "theme_color": "#10B981",
   "orientation": "portrait",
   "scope": "/",
   "lang": "fr",
-  "categories": ["productivity", "utilities"],
+  "categories": ["health", "lifestyle", "productivity"],
   "icons": [
     {
       "src": "/icon.svg",

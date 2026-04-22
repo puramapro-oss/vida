@@ -17,8 +17,8 @@
   --rose: #f472b6;
 
   --text-primary: #f0fdf4;
-  --text-secondary: rgba(240,253,244,0.55);
-  --text-muted: rgba(240,253,244,0.32);
+  --text-secondary: rgba(240,253,244,0.72);
+  --text-muted: rgba(240,253,244,0.55);
   --border: rgba(16,185,129,0.12);
   --border-glow: rgba(16,185,129,0.35);
 
@@ -45,8 +45,8 @@
   --emerald: #059669;
   --emerald-deep: #065f46;
   --text-primary: #052e16;
-  --text-secondary: rgba(5,46,22,0.68);
-  --text-muted: rgba(5,46,22,0.45);
+  --text-secondary: rgba(5,46,22,0.78);
+  --text-muted: rgba(5,46,22,0.65);
   --border: rgba(5,46,22,0.1);
   --border-glow: rgba(5,150,105,0.35);
   --cyan: #059669;

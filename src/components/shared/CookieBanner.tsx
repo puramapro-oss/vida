@@ -43,8 +43,12 @@ export default function CookieBanner() {
               <Button size="sm" variant="ghost" onClick={decline}>{t('decline')}</Button>
             </div>
           </div>
-          <button onClick={decline} className="shrink-0 rounded-lg p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-            <X className="h-4 w-4" />
+          <button
+            onClick={decline}
+            aria-label={t('decline')}
+            className="shrink-0 rounded-lg p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </div>

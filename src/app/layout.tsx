@@ -60,9 +60,8 @@ export const metadata: Metadata = {
     images: ['/api/og'],
   },
   robots: { index: true, follow: true },
-  alternates: {
-    canonical: 'https://vida.purama.dev',
-  },
+  // Pas de canonical root — laissé aux pages de définir le leur via
+  // generateMetadata si besoin (évite canonical incorrect cross-page).
 }
 
 export const viewport: Viewport = {
