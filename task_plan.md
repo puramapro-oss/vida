@@ -175,17 +175,19 @@
 - [x] **C5 (2026-04-22 commit 822c994)** : Migration 010_aide_simulations. Table traçabilité (user_id nullable, profil_hash, aides_count, cumul, simulation_ok, cache_hit, source). Logs /api/aides/search + /api/financer/match. Function purge 6 mois RGPD.
 - [x] **C6 (2026-04-22 commit f194583)** : tests/bloc-c.spec.ts — 8 tests Playwright (C1+C2+C4+C8+D). 8/8 PASS prod. v7-smoke 18/18 toujours vert (0 régression).
 - [x] **C8 (2026-04-22 commit 6baf6fd)** : src/components/shared/FinancerDisclaimer.tsx — modal 1ère visite (TTL 365j localStorage). Conformité CNIL/DGCCRF. Pas d'organisme social + vérifier sur sites officiels.
-- [~] **C7 (en cours 2026-04-22)** : vraie API Legifrance dynamique — F1-F4 terminés + deployés
-  - [x] **C7-F1** migration 012 : `vida_sante.legifrance_articles` + `sync_legifrance_jobs` + `sync_legifrance_logs` (GIN FTS français, RLS, 3 tables)
-  - [x] **C7-F2** client PISTE OAuth2 (src/lib/legifrance/piste.ts) — getAccessToken cache 60min, getArticleByCid, searchInCode, listArticlesOfCode (async gen), retry exp backoff. 4/4 tests unit.
-  - [x] **C7-F3** fallback OpenData DILA (src/lib/legifrance/opendata.ts) — listAvailableDumps, downloadDump, extractDump, parseArticleXml. Deps : tar + fast-xml-parser. 3/3 tests avec dump mock.
-  - [x] **C7-F4** cache layered (src/lib/legifrance/cache.ts) — 5 tiers : L0 Upstash → L1 Postgres FTS → L3 PISTE → L5 LAW_CONTEXT_STATIC (12 articles hardcodés). Feature-flag UPSTASH_REDIS_REST_URL. 8/8 tests dont round-trip Postgres réel.
-  - [ ] **C7-F5** ingest + embed OpenAI → Pinecone namespace legifrance (~20K articles, $0.08 one-shot). Bloqué : PISTE_CLIENT_ID+SECRET à obtenir sur piste.gouv.fr.
-  - [ ] **C7-F6** POST /api/admin/sync-legifrance (super_admin auth + Zod + rate limit)
-  - [ ] **C7-F7** CRON hebdo dim 3h `/api/cron/sync-legifrance`
-  - [ ] **C7-F8** intégration /api/chat : remplace LAW_CONTEXT par searchArticles() cache layered. Feature-flag LEGIFRANCE_DYNAMIC=true.
-  - [ ] **C7-F9** admin UI /admin/legifrance (3 codes, last_sync_at, force sync)
-  - [ ] **C7-F10** tests E2E Playwright (chat RAG + fallback chaos + admin)
+- [~] **C7 (en cours 2026-04-22)** : Legifrance dynamique — F1-F8 deployés prod
+  - [x] **C7-F1** migration 012 : schema 3 tables GIN FTS français + RLS
+  - [x] **C7-F2** client PISTE OAuth2 — 4/4 unit + 2/2 LIVE sandbox (Art. L1221-7 validé)
+  - [x] **C7-F3** fallback OpenData DILA (tar+XML streaming) — 3/3 tests mock
+  - [x] **C7-F4** cache layered 5 tiers — 8/8 tests dont round-trip Postgres réel
+  - [x] **C7-F5** ingest PISTE → Postgres (embed OpenAI en pause quota épuisé, LEGIFRANCE_SKIP_EMBEDDINGS=1). Pipeline Postgres validé 1/1 LIVE.
+  - [x] **C7-F6** POST /api/admin/sync-legifrance super_admin + rate limit + GET job status. Auth 401/403 validé live.
+  - [x] **C7-F7** CRON hebdo `/api/cron/sync-legifrance` Bearer CRON_SECRET. Vercel cron `0 3 * * 0`. Job créé et tracké en live (sandbox PISTE limite /search+/consult/code à 500 — full sync OK dès creds prod).
+  - [x] **C7-F8** /api/chat RAG dynamique : searchArticles() hybride + fallback LAW_CONTEXT si 0 results ou erreur. Flag LEGIFRANCE_DYNAMIC=true actif prod. 3/3 tests E2E.
+  - [ ] **C7-F9** admin UI /admin/legifrance (monitoring 3 codes, last_sync_at, force sync button)
+  - [ ] **C7-F10** tests E2E chaos Playwright (coupe PISTE → fallback works, admin flow complet)
+  - [ ] **Prod PISTE creds** : les creds actuelles sont sandbox-only. Obtenir creds prod via piste.gouv.fr pour débloquer full sync 20K articles.
+  - [ ] **OpenAI billing** : quota épuisé 2026-04-22 → reactiver facturation pour activer embeddings Pinecone (LEGIFRANCE_SKIP_EMBEDDINGS=0)
 
 ### ✅ Bloc D — IA droits sociaux (2026-04-21, commit d2ea0e2)
 - [x] /api/chat auto-inject Legifrance RAG quand isDroitsQuery=true
