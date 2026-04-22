@@ -223,12 +223,46 @@
 - [x] Console 0 error : vérifié sur 22 pages publiques
 - [x] Deploy final dpl_EfS7FP8TXmxysqCiMchHyiQZKF9g → https://vida.purama.dev
 
-### ❌ P7 — Mobile Expo (iOS + Android)
-- [ ] create-expo-app ~/purama/vida/mobile
-- [ ] Auth SecureStore adapter (CRITIQUE — voir CLAUDE.md)
-- [ ] Icônes (lotus/nature green #10B981)
-- [ ] 10 Maestro flows
-- [ ] EAS build + submit
+### 🚧 P7 — Mobile Expo (iOS + Android) — 6/8 features vertes (2026-04-22)
+- [x] **F1** Scaffold Expo 54 + expo-router 6 + NativeWind 4 + Tailwind 3 + zustand + haptics + linear-gradient + SecureStore + url-polyfill (commit F1)
+  - app.json : name VIDA, bundle `dev.purama.vida`, scheme `vida`, NSHealth* iOS + permissions Android santé
+  - eas.json : dev / preview / production + submit Apple+Google
+  - tailwind.config + babel + metro + global.css + nativewind-env.d.ts
+  - `.env` EXPO_PUBLIC_SUPABASE_URL/ANON_KEY/APP_URL/APP_SLUG
+  - tsc 0 · expo-doctor 17/17
+- [x] **F2** Auth SecureStore adapter + login/signup natifs (commit F2)
+  - `src/lib/supabase.ts` : Platform.OS split (SecureStore native / localStorage web) — pattern CLAUDE.md §16 CRITIQUE
+  - `src/hooks/useAuth.ts` : getSession + onAuthStateChange subscription
+  - `app/(auth)/login.tsx` + `app/(auth)/signup.tsx` : Haptics success/error, errors FR mappés
+  - `app/_layout.tsx` : AuthGate (non-auth → login, auth → tabs, loading → spinner)
+- [x] **F3** 4 écrans natifs + bottom tabs iOS/Android (commit F3)
+  - `(tabs)/_layout.tsx` : Tabs.Screen × 4 (Accueil, Chat, Wallet, Profil), SF Symbols iOS / MaterialIcons Android
+  - `(tabs)/index.tsx` Dashboard : greeting + impact stats DB réels + 4 quick actions
+  - `(tabs)/chat.tsx` : Bearer token Supabase, multiline input, fallback FR offline
+  - `(tabs)/wallet.tsx` : balance €, purama_points, tier badge, RefreshControl
+  - `(tabs)/profile.tsx` : avatar, menu 6 rows, signOut Alert confirm
+  - Design natif pur : View/Text/Pressable (0 WebView, 0 iframe, 0 Capacitor)
+- [x] **F4** HealthKit + Health Connect (commit F4)
+  - `src/lib/health.ts` Platform.OS switch : iOS AppleHealthKit (Steps, Distance, ActiveEnergy) / Android Health Connect (Steps, Distance, ActiveCaloriesBurned) / web stub
+  - requestHealthPermissions + getDailyHealthMetrics(date?) type-safe
+  - grep "terra.api|tryterra|rookmotion" = 0 ✓ (Terra API banni)
+  - Fix duplicate @expo/fingerprint via package.json overrides
+- [x] **F5** Screen Time abstraction (commit F5)
+  - `src/lib/screen-time.ts` Platform.OS switch + stubs MVP
+  - requestScreenTimePermission + getTodayScreenTime + isUnderScreenTimeLimit(limit)
+  - TODO bridging natif post-MVP via Expo Modules (libs npm stales RN^0.41)
+- [x] **F6** Icônes VIDA via Pollinations + sharp (commit F6)
+  - `scripts/generate-icons.mjs` : prompt lotus leaf #10B981 / void #030806, seed=42 reproductible
+  - icon.png 1024² + android-icon-foreground 1024² (pad 100px safe zone) + splash 1284×2778 (centrée) + favicon 48²
+- [ ] **F7** 10 Maestro flows YAML (auth, dashboard, chat, wallet, referral, onboarding, pricing, responsive, error, health)
+- [ ] **F8** EAS build + submit — **BLOQUÉ** : nécessite `APPLE_TEAM_ID` rempli dans `.env.local` + `google-service-account.json` à la racine mobile/
+
+**Blockers EAS Build (F8)** :
+1. APPLE_TEAM_ID=___à_remplir___ (CLAUDE.md §17 ligne 43)
+2. google-service-account.json absent (requis pour `eas submit --platform android`)
+3. FamilyControls entitlement Apple (F5 post-MVP)
+
+**Checks communs F1..F6** : `tsc --noEmit` = 0 · `expo-doctor` = 17/17 · `grep "terra.api|tryterra|rookmotion" mobile/src/` = 0 · 0 régression web (5/5 p5-landing.spec.ts après chaque feature)
 
 ### ❌ P8 — Apple Watch + Wear OS (OBLIGATOIRE — VIDA = santé/bien-être)
 - [ ] watchOS target : SwiftUI + HealthKit (pas, cardiaque, sommeil, SpO2)
