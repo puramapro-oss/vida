@@ -8,7 +8,7 @@ export default function ConfirmationPage() {
   const [showConfetti, setShowConfetti] = useState(false)
 
   useEffect(() => {
-    setShowConfetti(true)
+    queueMicrotask(() => setShowConfetti(true))
     // Deep link to mobile app if present
     const t = setTimeout(() => {
       if (typeof window !== 'undefined') {

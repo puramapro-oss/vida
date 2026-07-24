@@ -127,7 +127,7 @@ export default function TiragePage() {
   }, [user, supabase])
 
   useEffect(() => {
-    load()
+    queueMicrotask(() => load())
   }, [load])
 
   if (loading) {

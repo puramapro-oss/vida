@@ -46,7 +46,7 @@ export default function ModerationPage() {
     setLoading(false)
   }, [supabase])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { queueMicrotask(() => load()) }, [load])
 
   const approvePost = async (id: string) => {
     const { error } = await supabase.from('community_posts').update({ moderated: true }).eq('id', id)
@@ -132,7 +132,7 @@ export default function ModerationPage() {
           {posts.length === 0 ? (
             <div className="glass-card rounded-2xl p-12 text-center">
               <Shield className="h-10 w-10 text-emerald-400 mx-auto mb-3" />
-              <p className="font-medium text-[var(--text-primary)]">File vide — l'énergie circule librement</p>
+              <p className="font-medium text-[var(--text-primary)]">File vide — l&apos;énergie circule librement</p>
               <p className="text-sm text-[var(--text-muted)] mt-1">Aucun post en attente de modération.</p>
             </div>
           ) : (

@@ -75,7 +75,7 @@ export default function DashboardPage() {
               Bonjour {name},
             </h1>
             <p className="text-[var(--text-secondary)] mt-2 text-base md:text-lg">
-              Ta graine grandit. Aujourd'hui, un geste peut faire bouger le monde.
+              Ta graine grandit. Aujourd&apos;hui, un geste peut faire bouger le monde.
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">

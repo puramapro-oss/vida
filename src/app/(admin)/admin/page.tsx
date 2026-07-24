@@ -51,7 +51,7 @@ export default async function AdminDashboardPage() {
         <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl font-light mb-2">
           Cockpit VIDA
         </h1>
-        <p className="text-[var(--text-secondary)]">Tout ce qui bouge dans l'écosystème. En temps réel.</p>
+        <p className="text-[var(--text-secondary)]">Tout ce qui bouge dans l&apos;écosystème. En temps réel.</p>
       </header>
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -74,7 +74,7 @@ export default async function AdminDashboardPage() {
           {stats.pendingModerationCount === 0 ? (
             <div className="text-center py-8">
               <Sparkles className="h-8 w-8 text-[var(--emerald)] mx-auto mb-2" />
-              <p className="text-sm text-[var(--text-muted)]">Aucun post en attente. L'énergie circule.</p>
+              <p className="text-sm text-[var(--text-muted)]">Aucun post en attente. L&apos;énergie circule.</p>
             </div>
           ) : (
             <div>

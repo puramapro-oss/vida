@@ -66,13 +66,13 @@ export default function GratitudePage() {
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
       <header className="text-center">
         <div className="vida-chip mb-4 mx-auto inline-flex">
-          <Heart className="h-3.5 w-3.5" /> {todayCount}/3 gratitudes aujourd'hui
+          <Heart className="h-3.5 w-3.5" /> {todayCount}/3 gratitudes aujourd&apos;hui
         </div>
         <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl font-light mb-2">
           Merci, simplement.
         </h1>
         <p className="text-[var(--text-secondary)]">
-          Une pensée, un visage, un instant. Poser sa gratitude change la texture d'une journée.
+          Une pensée, un visage, un instant. Poser sa gratitude change la texture d&apos;une journée.
         </p>
       </header>
 
@@ -131,7 +131,7 @@ export default function GratitudePage() {
             exit={{ opacity: 0, y: -8 }}
             className="text-center text-sm text-[var(--emerald)] inline-flex items-center justify-center gap-2"
           >
-            <Check className="h-4 w-4" /> +100 XP d'éveil intégrés
+            <Check className="h-4 w-4" /> +100 XP d&apos;éveil intégrés
           </motion.div>
         )}
       </AnimatePresence>
@@ -142,7 +142,7 @@ export default function GratitudePage() {
           <p className="text-sm text-[var(--text-muted)] italic">Ton espace se prépare…</p>
         ) : entries.length === 0 ? (
           <p className="text-sm text-[var(--text-muted)] italic text-center py-8">
-            L'espace de toutes les possibilités.
+            L&apos;espace de toutes les possibilités.
           </p>
         ) : (
           <div className="flex flex-col gap-3">

@@ -78,9 +78,9 @@ export default function CommunautePage() {
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
       <header>
-        <div className="vida-chip mb-3"><Users className="h-3.5 w-3.5" /> Mur d'amour</div>
+        <div className="vida-chip mb-3"><Users className="h-3.5 w-3.5" /> Mur d&apos;amour</div>
         <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl font-light mb-2">
-          Ce qu'on vit, on le partage.
+          Ce qu&apos;on vit, on le partage.
         </h1>
         <p className="text-[var(--text-secondary)]">
           Une victoire, une gratitude, un élan. Ici, personne ne se juge. On se soulève.
@@ -133,7 +133,7 @@ export default function CommunautePage() {
         <div className="glass-card-static rounded-3xl p-10 text-center">
           <Sparkles className="h-10 w-10 text-[var(--emerald)] mx-auto mb-4" />
           <p className="text-[var(--text-primary)] font-medium mb-2">Sois la première voix.</p>
-          <p className="text-sm text-[var(--text-muted)]">Partage une victoire, aussi petite soit-elle. Quelqu'un en a besoin aujourd'hui.</p>
+          <p className="text-sm text-[var(--text-muted)]">Partage une victoire, aussi petite soit-elle. Quelqu&apos;un en a besoin aujourd&apos;hui.</p>
         </div>
       ) : (
         <AnimatePresence>

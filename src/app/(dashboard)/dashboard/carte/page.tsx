@@ -9,7 +9,7 @@ const ImpactMap = dynamic(() => import('@/components/shared/ImpactMap'), {
   ssr: false,
   loading: () => (
     <div className="h-[460px] rounded-3xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-center text-xs text-[var(--text-muted)]">
-      La carte du vivant s'ouvre…
+      La carte du vivant s&apos;ouvre…
     </div>
   ),
 })
@@ -37,7 +37,7 @@ export default function CartePage() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <div className="vida-chip mb-3"><Globe className="h-3.5 w-3.5" /> Carte mondiale d'impact</div>
+        <div className="vida-chip mb-3"><Globe className="h-3.5 w-3.5" /> Carte mondiale d&apos;impact</div>
         <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl font-light mb-2">
           On cultive la Terre, partout.
         </h1>

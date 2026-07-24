@@ -72,9 +72,9 @@ export default function MissionsPage() {
           <Trophy className="h-3.5 w-3.5" /> {missions.length} missions vivantes
         </div>
         <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl font-light mb-2">
-          Passe à l'action.
+          Passe à l&apos;action.
         </h1>
-        <p className="text-[var(--text-secondary)]">Chaque mission compte. Pour toi, pour le vivant, pour ce qu'on construit.</p>
+        <p className="text-[var(--text-secondary)]">Chaque mission compte. Pour toi, pour le vivant, pour ce qu&apos;on construit.</p>
       </header>
 
       <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-2">
@@ -104,7 +104,7 @@ export default function MissionsPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <p className="text-center py-16 text-[var(--text-muted)] italic">L'espace de toutes les possibilités.</p>
+        <p className="text-center py-16 text-[var(--text-muted)] italic">L&apos;espace de toutes les possibilités.</p>
       ) : (
         <motion.div
           initial="hidden"

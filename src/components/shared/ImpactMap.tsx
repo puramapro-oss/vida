@@ -88,7 +88,7 @@ export default function ImpactMap() {
       {!loading && points.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#0A0A0F]/60 backdrop-blur-sm">
           <p className="text-sm text-[var(--text-muted)] italic px-6 text-center max-w-xs">
-            La carte s'allumera dès la première action géolocalisée de la communauté.
+            La carte s&apos;allumera dès la première action géolocalisée de la communauté.
           </p>
         </div>
       )}

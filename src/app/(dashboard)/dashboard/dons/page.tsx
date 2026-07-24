@@ -44,9 +44,9 @@ export default function DonsPage() {
       <header>
         <div className="vida-chip mb-3"><Gift className="h-3.5 w-3.5" /> Don libre</div>
         <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl font-light mb-2">
-          Donner, c'est grandir.
+          Donner, c&apos;est grandir.
         </h1>
-        <p className="text-[var(--text-secondary)]">Chaque don nourrit l'écosystème VIDA et ses bénéficiaires.</p>
+        <p className="text-[var(--text-secondary)]">Chaque don nourrit l&apos;écosystème VIDA et ses bénéficiaires.</p>
       </header>
 
       <form onSubmit={handleSubmit} className="glass-card-static rounded-3xl p-6 md:p-8 flex flex-col gap-6">
@@ -149,7 +149,7 @@ export default function DonsPage() {
       </form>
 
       <p className="text-center text-xs text-[var(--text-muted)]">
-        Paiement sécurisé Stripe à venir. Ton don ouvrira droit à 66% de réduction d'impôt si versé à l'association VIDA.
+        Paiement sécurisé Stripe à venir. Ton don ouvrira droit à 66% de réduction d&apos;impôt si versé à l&apos;association VIDA.
       </p>
     </div>
   )

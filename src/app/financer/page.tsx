@@ -324,7 +324,7 @@ export default function FinancerPage() {
                 <h2 className="font-[family-name:var(--font-display)] text-2xl md:text-3xl font-medium mb-2">
                   Qui es-tu ?
                 </h2>
-                <p className="text-[var(--text-secondary)] mb-8">Coche tout ce qui s'applique à toi (plusieurs choix possibles).</p>
+                <p className="text-[var(--text-secondary)] mb-8">Coche tout ce qui s&apos;applique à toi (plusieurs choix possibles).</p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {SITUATIONS.map(s => {
@@ -687,7 +687,7 @@ export default function FinancerPage() {
                   Et maintenant ?
                 </h2>
                 <p className="text-[var(--text-secondary)] max-w-lg mx-auto mb-8">
-                  Crée un compte VIDA pour suivre tes demandes, recevoir des rappels, et débloquer de nouvelles aides dès qu'elles sortent.
+                  Crée un compte VIDA pour suivre tes demandes, recevoir des rappels, et débloquer de nouvelles aides dès qu&apos;elles sortent.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link
@@ -708,7 +708,7 @@ export default function FinancerPage() {
           </AnimatePresence>
 
           <p className="text-center text-xs text-[var(--text-muted)] mt-10 max-w-2xl mx-auto">
-            VIDA n'est pas un organisme social. Ces montants sont des plafonds indicatifs. Vérifie ton éligibilité réelle sur chaque site officiel.
+            VIDA n&apos;est pas un organisme social. Ces montants sont des plafonds indicatifs. Vérifie ton éligibilité réelle sur chaque site officiel.
           </p>
         </div>
       </main>

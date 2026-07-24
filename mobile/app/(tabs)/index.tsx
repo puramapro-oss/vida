@@ -29,7 +29,7 @@ export default function DashboardScreen() {
   }
 
   useEffect(() => {
-    load()
+    queueMicrotask(() => load())
   }, [])
 
   async function onRefresh() {

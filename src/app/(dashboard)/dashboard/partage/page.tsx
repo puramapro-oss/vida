@@ -104,7 +104,7 @@ export default function PartagePage() {
   }, [user, supabase])
 
   useEffect(() => {
-    load()
+    queueMicrotask(() => load())
   }, [load])
 
   const handleCopy = async () => {

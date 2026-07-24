@@ -109,7 +109,7 @@ export default function RituelsPage() {
           On respire ensemble, chaque dimanche.
         </h1>
         <p className="text-[var(--text-secondary)]">
-          Un thème, 20 minutes, partout sur Terre. Tu t'y joins — et le monde s'élève.
+          Un thème, 20 minutes, partout sur Terre. Tu t&apos;y joins — et le monde s&apos;élève.
         </p>
       </header>
 

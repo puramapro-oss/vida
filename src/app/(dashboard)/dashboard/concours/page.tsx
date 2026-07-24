@@ -109,7 +109,7 @@ export default function ConcoursPage() {
   }, [user, supabase])
 
   useEffect(() => {
-    load()
+    queueMicrotask(() => load())
   }, [load])
 
   if (loading) {

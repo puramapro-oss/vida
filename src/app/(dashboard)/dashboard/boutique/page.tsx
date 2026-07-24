@@ -49,7 +49,7 @@ export default function BoutiquePage() {
       <header>
         <div className="vida-chip mb-3"><ShoppingBag className="h-3.5 w-3.5" /> Boutique VIDA</div>
         <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl font-light mb-2">
-          Des objets qui t'élèvent.
+          Des objets qui t&apos;élèvent.
         </h1>
         <p className="text-[var(--text-secondary)]">Produits sélectionnés avec soin. Cashback en Graines VIDA à chaque achat.</p>
       </header>
@@ -63,7 +63,7 @@ export default function BoutiquePage() {
           ))}
         </div>
       ) : products.length === 0 ? (
-        <p className="text-center py-16 text-[var(--text-muted)] italic">L'espace de toutes les possibilités.</p>
+        <p className="text-center py-16 text-[var(--text-muted)] italic">L&apos;espace de toutes les possibilités.</p>
       ) : (
         <motion.div
           initial="hidden"

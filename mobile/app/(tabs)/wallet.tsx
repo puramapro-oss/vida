@@ -28,7 +28,7 @@ export default function WalletScreen() {
   }
 
   useEffect(() => {
-    load()
+    queueMicrotask(() => load())
   }, [user])
 
   async function onRefresh() {
