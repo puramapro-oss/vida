@@ -5,6 +5,7 @@ import { streamClaude, getSystemPrompt } from '@/lib/claude'
 import { PLAN_LIMITS, SUPER_ADMIN_EMAIL } from '@/lib/constants'
 import { LAW_CONTEXT, isDroitsQuery } from '@/lib/legifrance'
 import { searchArticles } from '@/lib/legifrance/cache'
+import { enforceRateLimit } from '@/lib/rate-limit'
 import type { LegifranceArticle } from '@/lib/legifrance/types'
 
 export const runtime = 'nodejs'
@@ -20,6 +21,9 @@ export async function POST(req: NextRequest) {
     const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
+
+    const limite = enforceRateLimit(`chat:${user.id}`, 60, 60_000)
+    if (limite) return limite
 
     const body = (await req.json()) as { messages: ChatMessage[]; conversationId?: string }
     const { messages, conversationId } = body

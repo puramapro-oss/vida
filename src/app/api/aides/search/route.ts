@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { SUPER_ADMIN_EMAIL } from '@/lib/constants'
+import { enforceRateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -216,6 +217,9 @@ export async function POST(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'Connexion requise pour lancer une simulation.' }, { status: 401 })
   }
+
+  const limite = enforceRateLimit(`aides:search:${user.id}`, 10, 60_000)
+  if (limite) return limite
 
   const body = await req.json().catch(() => null)
   const parsed = profilSchema.safeParse(body)
