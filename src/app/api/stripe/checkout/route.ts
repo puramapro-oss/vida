@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
         trial_period_days: 14,
-        metadata: { user_id: user.id, plan: 'premium', period },
+        metadata: { user_id: user.id, plan: 'premium', period, app_slug: 'vida' },
       },
       success_url: `${origin}/confirmation?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/pricing?checkout=cancelled`,
@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
         user_id: user.id,
         plan: 'premium',
         period,
+        app_slug: 'vida',
         ...(forcedCoupon ? { coupon: forcedCoupon, cross_promo_source: promo?.source ?? '' } : {}),
       },
     }

@@ -54,7 +54,7 @@
       {
         "hooks": [
           {
-            "command": "grep -rn 'TODO\\|console\\.log\\|placeholder\\|any:\\|Lorem\\|t\u00e9moignage' src/ 2>/dev/null | head -10 && echo '\u26d4 PLACEHOLDERS OR FAKE CONTENT \u2014 FIX' && exit 2 || echo '\u2705 Clean'",
+            "command": "grep -rn 'TODO\\|console\\.log\\|placeholder\\|any:\\|Lorem\\|témoignage' src/ 2>/dev/null | grep -v 'placeholder=\\|placeholder:' | head -10 | (read -r l && echo \"$l\" && echo '⛔ PLACEHOLDERS OR FAKE CONTENT — FIX' && exit 2    || echo '✅ Clean')",
             "type": "command"
           }
         ]

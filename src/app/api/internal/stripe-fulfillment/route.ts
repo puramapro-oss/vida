@@ -43,13 +43,20 @@ async function distributeToPool(poolType: 'reward' | 'asso', amountCents: number
 }
 
 export async function POST(req: NextRequest) {
+  // Auth 1: internal secret (from karma dispatcher)
+  const internalSecret = req.headers.get('x-internal-secret')
+  if (internalSecret !== process.env.INTERNAL_WEBHOOK_SECRET) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
+
   const body = await req.text()
-  const signature = req.headers.get('stripe-signature')
+  const signature = req.headers.get('x-stripe-signature')
 
   if (!signature) {
     return NextResponse.json({ error: 'Missing stripe-signature' }, { status: 400 })
   }
 
+  // Auth 2: defense in depth — still verify Stripe signature
   let event: Stripe.Event
   try {
     const stripe = getStripe()
