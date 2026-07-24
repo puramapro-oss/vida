@@ -19,11 +19,13 @@ export default function WalletPhase1({
   const eurosEquiv = pointsToEuros(balancePoints)
   const primeEuros = primeAccumulated / 100
 
+  // eslint-disable-next-line react-hooks/purity -- Date.now() is acceptable for time-based unlock calc
+  const now = Date.now()
   let daysUntilUnlock = 0
   if (subscriptionStartedAt) {
     const start = new Date(subscriptionStartedAt)
     const unlockAt = new Date(start.getTime() + 30 * 86400000)
-    daysUntilUnlock = Math.max(0, Math.ceil((unlockAt.getTime() - Date.now()) / 86400000))
+    daysUntilUnlock = Math.max(0, Math.ceil((unlockAt.getTime() - now) / 86400000))
   }
   const canWithdraw = subscriptionStartedAt != null && daysUntilUnlock === 0
 

@@ -42,13 +42,15 @@ export default function BreathOverlay({ open, onClose, cycles = 3 }: BreathOverl
   // Run the breathing cycle
   useEffect(() => {
     if (!open) {
-      setPhase('idle')
-      setCycle(0)
+      queueMicrotask(() => {
+        setPhase('idle')
+        setCycle(0)
+      })
       if (timerRef.current) clearTimeout(timerRef.current)
       return
     }
     if (reduced) {
-      setPhase('done')
+      queueMicrotask(() => setPhase('done'))
       return
     }
 

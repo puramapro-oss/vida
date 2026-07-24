@@ -8,6 +8,11 @@ export default function CinematicIntro() {
   const [visible, setVisible] = useState(false)
   const reduced = useReducedMotion()
 
+  const dismiss = () => {
+    try { localStorage.setItem('vida_intro_seen', '1') } catch {}
+    setVisible(false)
+  }
+
   useEffect(() => {
     try {
       if (typeof window !== 'undefined' && !localStorage.getItem('vida_intro_seen')) {
@@ -16,17 +21,12 @@ export default function CinematicIntro() {
           localStorage.setItem('vida_intro_seen', '1')
           return
         }
-        setVisible(true)
+        queueMicrotask(() => setVisible(true))
         const t = setTimeout(() => dismiss(), 4000)
         return () => clearTimeout(t)
       }
     } catch {}
   }, [reduced])
-
-  function dismiss() {
-    try { localStorage.setItem('vida_intro_seen', '1') } catch {}
-    setVisible(false)
-  }
 
   return (
     <AnimatePresence>

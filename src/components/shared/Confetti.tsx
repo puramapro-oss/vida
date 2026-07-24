@@ -22,7 +22,7 @@ export default function Confetti({ active, duration = 3000 }: ConfettiProps) {
 
   useEffect(() => {
     if (!active) {
-      setParticles([])
+      queueMicrotask(() => setParticles([]))
       return
     }
     const newParticles = Array.from({ length: 50 }, (_, i) => ({
@@ -32,9 +32,9 @@ export default function Confetti({ active, duration = 3000 }: ConfettiProps) {
       delay: Math.random() * 500,
       size: 4 + Math.random() * 8,
     }))
-    setParticles(newParticles)
+    queueMicrotask(() => setParticles(newParticles))
 
-    const timer = setTimeout(() => setParticles([]), duration)
+    const timer = setTimeout(() => queueMicrotask(() => setParticles([])), duration)
     return () => clearTimeout(timer)
   }, [active, duration])
 
@@ -42,22 +42,26 @@ export default function Confetti({ active, duration = 3000 }: ConfettiProps) {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
-      {particles.map(p => (
-        <div
-          key={p.id}
-          className="absolute animate-confetti"
-          style={{
-            left: `${p.x}%`,
-            top: '-10px',
-            width: `${p.size}px`,
-            height: `${p.size}px`,
-            backgroundColor: p.color,
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-            animationDelay: `${p.delay}ms`,
-            animationDuration: `${1500 + Math.random() * 1500}ms`,
-          }}
-        />
-      ))}
+      {particles.map((p, idx) => {
+        const isCircle = idx % 2 === 0
+        const duration = 1500 + (idx % 10) * 150
+        return (
+          <div
+            key={p.id}
+            className="absolute animate-confetti"
+            style={{
+              left: `${p.x}%`,
+              top: '-10px',
+              width: `${p.size}px`,
+              height: `${p.size}px`,
+              backgroundColor: p.color,
+              borderRadius: isCircle ? '50%' : '2px',
+              animationDelay: `${p.delay}ms`,
+              animationDuration: `${duration}ms`,
+            }}
+          />
+        )
+      })}
     </div>
   )
 }

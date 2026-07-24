@@ -100,7 +100,7 @@ export default function HomepageBlocks({ user, profile }: Props) {
   useEffect(() => {
     // rotate KAÏA/PRANA deterministically per day (no SSR flash)
     const day = Math.floor(Date.now() / (1000 * 60 * 60 * 24))
-    setTarget(CROSS_PROMO_TARGETS[day % CROSS_PROMO_TARGETS.length])
+    queueMicrotask(() => setTarget(CROSS_PROMO_TARGETS[day % CROSS_PROMO_TARGETS.length]))
   }, [])
 
   const { currentTier, nextTier, progressPct } = useMemo(() => {

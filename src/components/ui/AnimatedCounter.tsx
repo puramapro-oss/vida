@@ -28,11 +28,11 @@ export default function AnimatedCounter({
   useEffect(() => {
     if (!isInView) return
     if (reduced) {
-      setDisplay(value)
+      queueMicrotask(() => setDisplay(value))
       return
     }
 
-    let start = 0
+    const start = 0
     const startTime = performance.now()
     const end = value
 

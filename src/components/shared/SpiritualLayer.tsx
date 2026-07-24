@@ -95,20 +95,25 @@ export default function SpiritualLayer() {
           {/* Confetti */}
           {confetti && (
             <div className="pointer-events-none fixed inset-0 overflow-hidden">
-              {Array.from({ length: 40 }).map((_, i) => (
-                <span
-                  key={i}
-                  className="absolute top-0 animate-confetti"
-                  style={{
-                    left: `${Math.random() * 100}%`,
-                    animationDelay: `${Math.random() * 0.4}s`,
-                    color: ['#10B981', '#84cc16', '#f472b6', '#fef3c7'][i % 4],
-                    fontSize: `${12 + Math.random() * 14}px`,
-                  }}
-                >
-                  ✦
-                </span>
-              ))}
+              {Array.from({ length: 40 }).map((_, i) => {
+                const leftPos = ((i * 7) % 100)
+                const delayMs = ((i * 23) % 400)
+                const size = 12 + ((i * 11) % 14)
+                return (
+                  <span
+                    key={i}
+                    className="absolute top-0 animate-confetti"
+                    style={{
+                      left: `${leftPos}%`,
+                      animationDelay: `${delayMs}ms`,
+                      color: ['#10B981', '#84cc16', '#f472b6', '#fef3c7'][i % 4],
+                      fontSize: `${size}px`,
+                    }}
+                  >
+                    ✦
+                  </span>
+                )
+              })}
             </div>
           )}
         </motion.div>
