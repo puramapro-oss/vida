@@ -14,7 +14,7 @@
  * Usage : node scripts/generate-icons.mjs
  */
 import sharp from 'sharp'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
