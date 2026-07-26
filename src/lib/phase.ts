@@ -27,7 +27,7 @@ export function isIbanAvailable(): boolean {
 }
 
 export function isWithdrawalAvailable(): boolean {
-  return process.env.WITHDRAWAL_AVAILABLE === "true";
+  return process.env.NEXT_PUBLIC_WITHDRAWAL_AVAILABLE === "true";
 }
 
 export function isPrimeCardActive(): boolean {
