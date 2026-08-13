@@ -45,8 +45,10 @@ export const PLAN_LIMITS = {
 
 export const WALLET_MIN_WITHDRAWAL = 5
 export const WALLET_MAX_WITHDRAWAL = 1000
+// KARMA split 50/10/40 (CLAUDE.md §9.1) — 40% SASU restants non trackés en pool séparé
+// (comportement existant : seuls reward/asso sont crédités dans pool_balances).
 export const ASSO_PERCENTAGE = 10
-export const REWARD_POOL_PERCENTAGE = 10
+export const REWARD_POOL_PERCENTAGE = 50
 
 export const XP_ACTIONS = {
   daily_login: 10,
