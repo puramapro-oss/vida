@@ -71,6 +71,15 @@ export async function POST(req: NextRequest) {
 
   const db = createServiceClient()
 
+  // Idempotency — process each event exactly once (unique violation = already done).
+  const { error: dupErr } = await db
+    .from('stripe_events')
+    .insert({ event_id: event.id, type: event.type })
+  if (dupErr) {
+    if (dupErr.code === '23505') return NextResponse.json({ received: true, duplicate: true })
+    return NextResponse.json({ error: 'Erreur idempotence' }, { status: 500 })
+  }
+
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -299,8 +308,9 @@ export async function POST(req: NextRequest) {
         break
       }
     }
-  } catch {
-    // swallow errors to avoid Stripe retry loops on non-recoverable issues
+  } catch (err) {
+    console.error(`[fulfillment] Erreur traitement ${event.type}:`, err)
+    return NextResponse.json({ error: 'Erreur traitement' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true })
