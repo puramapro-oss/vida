@@ -64,6 +64,8 @@ export async function POST(req: NextRequest) {
         email: user.email ?? profile?.email ?? undefined,
         name: profile?.full_name ?? undefined,
         metadata: { user_id: user.id, app: 'vida' },
+      }, {
+        idempotencyKey: `customer:${user.id}`,
       })
       customerId = customer.id
 
@@ -108,7 +110,9 @@ export async function POST(req: NextRequest) {
       params.allow_promotion_codes = true
     }
 
-    const session = await stripe.checkout.sessions.create(params)
+    const session = await stripe.checkout.sessions.create(params, {
+      idempotencyKey: `checkout:${user.id}:${period}:${new Date().toISOString().slice(0, 10)}`,
+    })
 
     // Link cross_promos click row → user (pre-conversion).
     if (forcedCoupon && promo?.source) {
