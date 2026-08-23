@@ -19,7 +19,7 @@ const ACCENT_COLORS = [
 
 interface AppearanceTabProps {
   user: { id: string } | null
-  profile: { theme?: string } | null
+  profile: { theme?: string | null } | null
 }
 
 export default function AppearanceTab({ user, profile }: AppearanceTabProps) {
@@ -28,8 +28,8 @@ export default function AppearanceTab({ user, profile }: AppearanceTabProps) {
   const supabase = createClient()
 
   useEffect(() => {
-    if (profile?.theme) {
-      queueMicrotask(() => setAccentColor(profile.theme))
+    if (profile?.theme && typeof profile.theme === 'string') {
+      queueMicrotask(() => setAccentColor(profile.theme as string))
     }
   }, [profile])
 

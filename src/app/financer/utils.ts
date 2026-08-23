@@ -1,5 +1,5 @@
 import {
-  Leaf, Users, Heart, Home, Briefcase, Baby,
+  Users, Heart, Home, Briefcase, Baby,
   Accessibility, GraduationCap, UserCheck, MapPin, Sparkles,
 } from 'lucide-react'
 

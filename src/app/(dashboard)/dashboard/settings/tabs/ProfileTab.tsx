@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button'
 
 interface ProfileTabProps {
   user: { id: string; email?: string } | null
-  profile: { full_name?: string | null; pseudo?: string | null; bio?: string | null; email?: string } | null
+  profile: { full_name?: string | null; pseudo?: string | null; bio?: string | null; email?: string | null } | null
   refetch: () => void
 }
 

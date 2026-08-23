@@ -16,14 +16,15 @@ import {
   Zap,
   Wind,
   Leaf,
-  Baby,
-  Home,
-  MapPin,
 } from 'lucide-react'
 import Nav from './landing/Nav'
 import HeroParallax from './landing/HeroParallax'
 import ImpactSection from './landing/ImpactSection'
-import { PILIERS, ACTIONS, COMMENT, FAQ } from './landing/constants'
+import PiliersSection from './landing/PiliersSection'
+import ActionsGrid from './landing/ActionsGrid'
+import CommentSection from './landing/CommentSection'
+import FAQSection from './landing/FAQSection'
+import { fadeUp } from './landing/animations'
 export default function LandingPage() {
   const [breathOpen, setBreathOpen] = useState(false)
 
@@ -126,151 +127,14 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* PILIERS */}
-        <section id="piliers" className="py-24 px-4">
-          <div className="max-w-6xl mx-auto">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeUp}
-              className="text-center mb-16"
-            >
-              <p className="text-sm uppercase tracking-[0.2em] text-[var(--emerald)] mb-4">
-                Les trois piliers
-              </p>
-              <h2 className="font-[family-name:var(--font-display)] text-3xl md:text-5xl font-light leading-[1.15]">
-                Trois piliers. <span className="text-[var(--emerald)]">Un chemin.</span>
-              </h2>
-            </motion.div>
-
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: '-80px' }}
-              variants={staggerParent}
-              className="grid md:grid-cols-3 gap-6"
-            >
-              {PILIERS.map((p, i) => (
-                <motion.div
-                  key={p.title}
-                  variants={i === 0 ? slideInLeft : i === 2 ? slideInRight : fadeUp}
-                  className="glass-card p-8 rounded-3xl hover:bg-[var(--bg-card-hover)] transition-all"
-                >
-                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[var(--emerald)]/20 to-[var(--sage)]/10 flex items-center justify-center mb-6">
-                    <p.icon className="h-6 w-6 text-[var(--emerald)]" />
-                  </div>
-                  <h3 className="font-[family-name:var(--font-display)] text-2xl font-medium mb-3">
-                    {p.title}
-                  </h3>
-                  <p className="text-[var(--text-secondary)] leading-relaxed">{p.desc}</p>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
+        <PiliersSection />
 
         {/* IMPACT — compteurs réels DB */}
         <ImpactSection />
 
-        {/* ACTIONS GRID */}
-        <section className="py-24 px-4">
-          <div className="max-w-6xl mx-auto">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeUp}
-              className="text-center mb-16"
-            >
-              <p className="text-sm uppercase tracking-[0.2em] text-[var(--emerald)] mb-4">
-                Ce que tu peux faire
-              </p>
-              <h2 className="font-[family-name:var(--font-display)] text-3xl md:text-5xl font-light leading-[1.15]">
-                Six gestes. <span className="text-[var(--emerald)]">Infinies traces.</span>
-              </h2>
-            </motion.div>
+        <ActionsGrid />
 
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: '-60px' }}
-              variants={staggerParent}
-              className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
-              {ACTIONS.map((a) => (
-                <motion.div
-                  key={a.title}
-                  variants={scaleIn}
-                  className="glass-card p-6 rounded-3xl group"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="h-11 w-11 shrink-0 rounded-2xl bg-gradient-to-br from-[var(--emerald)]/20 to-[var(--sage)]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <a.icon className="h-5 w-5 text-[var(--emerald)]" />
-                    </div>
-                    <div>
-                      <h3 className="font-[family-name:var(--font-display)] text-lg font-medium mb-1.5">
-                        {a.title}
-                      </h3>
-                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                        {a.desc}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-
-        {/* COMMENT ÇA MARCHE */}
-        <section id="comment" className="py-24 px-4">
-          <div className="max-w-5xl mx-auto">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeUp}
-              className="text-center mb-16"
-            >
-              <p className="text-sm uppercase tracking-[0.2em] text-[var(--emerald)] mb-4">
-                Comment ça marche
-              </p>
-              <h2 className="font-[family-name:var(--font-display)] text-3xl md:text-5xl font-light leading-[1.15]">
-                Trois pas. <span className="text-[var(--emerald)]">Une vie.</span>
-              </h2>
-            </motion.div>
-
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: '-60px' }}
-              variants={staggerParent}
-              className="grid md:grid-cols-3 gap-6"
-            >
-              {COMMENT.map((s) => (
-                <motion.div
-                  key={s.num}
-                  variants={scaleIn}
-                  className="glass-card p-8 rounded-3xl relative overflow-hidden"
-                >
-                  <div className="absolute -top-2 -right-2 font-[family-name:var(--font-display)] text-7xl font-bold text-[var(--emerald)]/10 select-none">
-                    {s.num}
-                  </div>
-                  <div className="relative">
-                    <p className="text-xs uppercase tracking-[0.2em] text-[var(--emerald)] mb-3">
-                      Étape {s.num}
-                    </p>
-                    <h3 className="font-[family-name:var(--font-display)] text-2xl font-medium mb-3">
-                      {s.title}
-                    </h3>
-                    <p className="text-[var(--text-secondary)] leading-relaxed">{s.desc}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
+        <CommentSection />
 
         {/* RITUEL BANNER */}
         <section className="py-24 px-4">
@@ -352,60 +216,7 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* FAQ */}
-        <section className="py-24 px-4">
-          <div className="max-w-3xl mx-auto">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeUp}
-              className="text-center mb-12"
-            >
-              <p className="text-sm uppercase tracking-[0.2em] text-[var(--emerald)] mb-4">
-                Questions
-              </p>
-              <h2 className="font-[family-name:var(--font-display)] text-3xl md:text-5xl font-light leading-[1.15]">
-                Ce qu&apos;on nous demande <span className="text-[var(--emerald)]">souvent.</span>
-              </h2>
-            </motion.div>
-
-            <div className="space-y-4">
-              {FAQ.map((item, i) => (
-                <motion.details
-                  key={item.q}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
-                  variants={fadeUp}
-                  transition={{ delay: i * 0.05 }}
-                  className="glass-card rounded-2xl p-6 group"
-                >
-                  <summary className="flex items-center justify-between cursor-pointer list-none">
-                    <span className="font-[family-name:var(--font-display)] text-base md:text-lg font-medium pr-4">
-                      {item.q}
-                    </span>
-                    <span className="h-8 w-8 shrink-0 rounded-full border border-[var(--emerald)]/30 flex items-center justify-center text-[var(--emerald)] group-open:rotate-45 transition-transform">
-                      +
-                    </span>
-                  </summary>
-                  <p className="mt-4 text-sm md:text-base text-[var(--text-secondary)] leading-relaxed">
-                    {item.a}
-                  </p>
-                </motion.details>
-              ))}
-            </div>
-
-            <div className="mt-8 text-center">
-              <Link
-                href="/aide"
-                className="text-sm text-[var(--emerald)] hover:underline"
-              >
-                Voir toute l&apos;aide →
-              </Link>
-            </div>
-          </div>
-        </section>
+        <FAQSection />
 
         {/* FINAL CTA */}
         <section className="py-24 px-4">
