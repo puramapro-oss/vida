@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { Heart, Trees, Users, Gift, Check } from 'lucide-react'
 
 const PRESETS = [5, 10, 25, 50, 100]

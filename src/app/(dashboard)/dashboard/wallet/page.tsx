@@ -7,10 +7,9 @@ import { createClient } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import Badge from '@/components/ui/Badge'
 import Skeleton from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
-import { formatDate, formatPrice } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 import { WALLET_MIN_WITHDRAWAL } from '@/lib/constants'
 
 // V7 §27 — Phase 1 = points only. Withdrawals live in Phase 2 (post-Treezor).

@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+/* Mappe les tokens sémantiques attendus par src/lib/legal/components/* (socle NIYAMA,
+   classes style shadcn bg-background/text-muted-foreground/border-border/rounded-pill)
+   sur les vraies CSS vars VIDA ci-dessous — sans ce bloc, Tailwind v4 ne génère aucune
+   utilité pour ces classes (0 erreur build, rendu cassé en silence, piège PIEGES.md §16/§198). */
+@theme inline {
+  --color-background: var(--bg-void);
+  --color-background-soft: var(--bg-nebula);
+  --color-foreground: var(--text-primary);
+  --color-muted-foreground: var(--text-secondary);
+  --color-border: var(--border);
+  --color-primary: var(--emerald);
+  --color-primary-on-dark: var(--emerald);
+  --color-destructive: #ef4444;
+  --radius-pill: 9999px;
+}
+
 :root, [data-theme='dark'] {
   --bg-void: #030806;
   --bg-nebula: #061a11;

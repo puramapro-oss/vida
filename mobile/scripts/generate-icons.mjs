@@ -30,15 +30,12 @@ const POLLINATIONS_URL = `https://image.pollinations.ai/prompt/${PROMPT}?width=1
 async function downloadAndProcess() {
   if (!existsSync(OUT_DIR)) await mkdir(OUT_DIR, { recursive: true })
 
-  console.log('→ Téléchargement Pollinations…')
   const res = await fetch(POLLINATIONS_URL)
   if (!res.ok) throw new Error(`Pollinations HTTP ${res.status}`)
   const buf = Buffer.from(await res.arrayBuffer())
-  console.log(`  ${(buf.length / 1024).toFixed(1)} KB`)
 
   // 1. icon.png — 1024×1024 iOS
   await sharp(buf).resize(1024, 1024, { fit: 'cover' }).png().toFile(join(OUT_DIR, 'icon.png'))
-  console.log('✓ icon.png 1024×1024')
 
   // 2. android-icon-foreground.png — 1024×1024 avec pad 100px (safe zone Android adaptive)
   await sharp(buf)
@@ -46,7 +43,6 @@ async function downloadAndProcess() {
     .extend({ top: 100, bottom: 100, left: 100, right: 100, background: { r: 10, g: 10, b: 15, alpha: 0 } })
     .png()
     .toFile(join(OUT_DIR, 'android-icon-foreground.png'))
-  console.log('✓ android-icon-foreground.png 1024×1024 (pad 100px)')
 
   // 3. splash-icon.png — icône centrée sur 1284×2778 fond #0A0A0F
   await sharp({
@@ -65,13 +61,9 @@ async function downloadAndProcess() {
     ])
     .png()
     .toFile(join(OUT_DIR, 'splash-icon.png'))
-  console.log('✓ splash-icon.png 1284×2778 (centrée)')
 
   // 4. favicon.png — 48×48 web
   await sharp(buf).resize(48, 48, { fit: 'cover' }).png().toFile(join(OUT_DIR, 'favicon.png'))
-  console.log('✓ favicon.png 48×48')
-
-  console.log('\n🌿 Icônes VIDA générées.')
 }
 
 downloadAndProcess().catch((err) => {

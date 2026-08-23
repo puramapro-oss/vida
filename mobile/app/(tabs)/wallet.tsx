@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { View, Text, ScrollView, RefreshControl } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -17,7 +17,7 @@ export default function WalletScreen() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [refreshing, setRefreshing] = useState(false)
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!user) return
     const { data } = await supabase
       .from('profiles')
@@ -25,11 +25,11 @@ export default function WalletScreen() {
       .eq('id', user.id)
       .maybeSingle<Profile>()
     if (data) setProfile(data)
-  }
+  }, [user])
 
   useEffect(() => {
     queueMicrotask(() => load())
-  }, [user])
+  }, [load])
 
   async function onRefresh() {
     setRefreshing(true)

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Leaf, Users, Wallet, Heart, Home, Briefcase, Baby,
+  Leaf, Users, Heart, Home, Briefcase, Baby,
   Accessibility, GraduationCap, UserCheck, MapPin,
   ArrowRight, ArrowLeft, Check, Download, ExternalLink, Sparkles,
   Euro, TrendingUp, ChevronDown, ChevronUp, Calculator, BookOpen,

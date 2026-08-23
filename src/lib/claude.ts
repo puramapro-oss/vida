@@ -1,7 +1,11 @@
+import 'server-only'
 import Anthropic from '@anthropic-ai/sdk'
+import { smarana } from '@purama/smarana'
+import type { SmaranaTier } from '@purama/smarana'
 
 export type Plan = 'free' | 'premium'
 
+// Garder client Anthropic uniquement pour streamClaude (streaming hors périmètre smarana P0/P1)
 let _anthropic: Anthropic | null = null
 function getAnthropic(): Anthropic {
   if (!_anthropic) {
@@ -18,6 +22,11 @@ const TOKEN_LIMITS: Record<Plan, number> = {
 const MODEL_MAP: Record<Plan, string> = {
   free: process.env.ANTHROPIC_MODEL_FAST ?? 'claude-haiku-4-5-20251001',
   premium: process.env.ANTHROPIC_MODEL_MAIN ?? 'claude-sonnet-4-6',
+}
+
+const PLAN_TO_TIER: Record<Plan, SmaranaTier> = {
+  free: 'fast',
+  premium: 'main',
 }
 
 export function getSystemPrompt(context?: { articles?: string[] }): string {
@@ -57,23 +66,34 @@ STRUCTURE DE RÉPONSE :
 Tu es VIDA. Expert. Précis. Au service des droits de chacun.`
 }
 
+// Loi 1 SMARANA-BRIEF.md : "Aucune app n'appelle l'API directement. Tout passe par smarana.ask()."
+// VIDA ne détient plus de client Anthropic pour askClaude — mémoire cross-écosystème + cache + usage
+// centralisés dans @purama/smarana (packages/smarana).
 export async function askClaude(
   messages: { role: 'user' | 'assistant'; content: string }[],
   plan: Plan = 'free',
   systemPrompt?: string,
-  context?: { articles?: string[] }
+  context?: { articles?: string[] },
+  userId?: string
 ): Promise<string> {
-  const response = await getAnthropic().messages.create({
-    model: MODEL_MAP[plan],
-    max_tokens: TOKEN_LIMITS[plan],
-    system: systemPrompt ?? getSystemPrompt(context),
-    messages,
+  const system = systemPrompt ?? getSystemPrompt(context)
+  const lastMsg = messages[messages.length - 1]
+  const recentMessages = messages.length > 1 ? messages.slice(0, -1) : undefined
+
+  const result = await smarana.ask({
+    appSlug: 'vida_sante',
+    userId,
+    system,
+    recentMessages,
+    message: lastMsg?.content ?? '',
+    tier: PLAN_TO_TIER[plan],
+    maxTokens: TOKEN_LIMITS[plan],
   })
-  const block = response.content[0]
-  if (block.type === 'text') return block.text
-  return ''
+  return result.text
 }
 
+// streamClaude HORS PÉRIMÈTRE smarana P0/P1 (streaming non supporté) — garde SDK direct.
+// Utilisé par api/chat/route.ts (conversations multi-tours streaming).
 export async function* streamClaude(
   messages: { role: 'user' | 'assistant'; content: string }[],
   plan: Plan = 'free',
@@ -95,18 +115,19 @@ export async function* streamClaude(
 
 export async function askClaudeJSON<T>(
   prompt: string,
-  plan: Plan = 'free'
+  plan: Plan = 'free',
+  userId?: string
 ): Promise<T | null> {
   try {
-    const response = await getAnthropic().messages.create({
-      model: MODEL_MAP[plan],
-      max_tokens: TOKEN_LIMITS[plan],
+    const result = await smarana.ask({
+      appSlug: 'vida_sante',
+      userId,
       system: 'Tu retournes UNIQUEMENT du JSON valide, sans texte avant ni après, sans markdown.',
-      messages: [{ role: 'user', content: prompt }],
+      message: prompt,
+      tier: PLAN_TO_TIER[plan],
+      maxTokens: TOKEN_LIMITS[plan],
     })
-    const block = response.content[0]
-    if (block.type !== 'text') return null
-    const clean = block.text.trim().replace(/^```(?:json)?\s*|\s*```$/g, '')
+    const clean = result.text.trim().replace(/^```(?:json)?\s*|\s*```$/g, '')
     return JSON.parse(clean) as T
   } catch {
     return null

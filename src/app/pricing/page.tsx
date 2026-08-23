@@ -43,7 +43,6 @@ export default function PricingPage() {
   const [period, setPeriod] = useState<Period>('year')
   const [loading, setLoading] = useState(false)
 
-  const premiumPrice = period === 'year' ? 7990 : 990
   const priceLabel = period === 'year' ? '79,90' : '9,90'
   const monthlyEquivalent = period === 'year' ? '6,66' : '9,90'
   const saving = period === 'year' ? '-33%' : null

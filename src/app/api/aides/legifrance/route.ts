@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
       [{ role: 'user', content: query }],
       'premium',
       undefined,
-      { articles: [LAW_CONTEXT] }
+      { articles: [LAW_CONTEXT] },
+      user.id
     )
 
     return NextResponse.json({ response, source: 'vida_law_rag' })

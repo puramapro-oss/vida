@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Calendar, Clock, Users, Sparkles } from 'lucide-react'
+import { Calendar, Clock, Users } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 interface Ritual {

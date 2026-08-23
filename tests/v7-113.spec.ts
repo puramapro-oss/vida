@@ -12,7 +12,7 @@
  * is marked `test.skip` with a clear reason → never a false PASS.
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 
 const BASE = 'https://vida.purama.dev'
 

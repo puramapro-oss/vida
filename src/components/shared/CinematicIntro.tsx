@@ -9,7 +9,11 @@ export default function CinematicIntro() {
   const reduced = useReducedMotion()
 
   const dismiss = () => {
-    try { localStorage.setItem('vida_intro_seen', '1') } catch {}
+    try {
+      localStorage.setItem('vida_intro_seen', '1')
+    } catch {
+      // localStorage can throw in private browsing — ignore silently
+    }
     setVisible(false)
   }
 
@@ -25,7 +29,9 @@ export default function CinematicIntro() {
         const t = setTimeout(() => dismiss(), 4000)
         return () => clearTimeout(t)
       }
-    } catch {}
+    } catch {
+      // localStorage can throw in private browsing — ignore silently
+    }
   }, [reduced])
 
   return (

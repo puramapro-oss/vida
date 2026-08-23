@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from 'react-native'
 import { Link, router } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
