@@ -6,6 +6,23 @@ import { SUPER_ADMIN_EMAIL } from '@/lib/constants'
 import type { Profile } from '@/types'
 import type { User, Session } from '@supabase/supabase-js'
 
+/**
+ * Preuve d'acceptation CGU/CGV/confidentialité horodatée (NIYAMA-BRIEF.md §1). La version
+ * enregistrée est TOUJOURS calculée côté serveur (`CURRENT_LEGAL_VERSIONS[docType]`,
+ * cf `src/app/api/legal/accept/route.ts`), jamais envoyée par ce client — corrige
+ * CONFORMITE.md Gap #2 (case CGU cochée à l'écran mais jamais persistée en base).
+ * Best-effort : n'importe jamais bloquer la création de compte.
+ */
+function recordLegalAcceptance() {
+  for (const docType of ['cgu', 'cgv', 'confidentialite'] as const) {
+    fetch('/api/legal/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ docType }),
+    }).catch(() => {})
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -66,6 +83,7 @@ export function useAuth() {
       password,
       options: { data: { full_name: displayName } },
     })
+    if (!error) recordLegalAcceptance()
     return { error }
   }, [supabase])
 

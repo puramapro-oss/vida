@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 import { Toaster } from 'sonner'
 import ErrorBoundary from '@/components/shared/ErrorBoundary'
-import CookieBanner from '@/components/shared/CookieBanner'
+import CookieConsentMount from '@/components/shared/CookieConsentMount'
 import CursorGlow from '@/components/layout/CursorGlow'
 import './globals.css'
 
@@ -87,7 +87,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <ErrorBoundary>
             {children}
           </ErrorBoundary>
-          <CookieBanner />
+          <CookieConsentMount />
         </NextIntlClientProvider>
         <Toaster
           position="top-right"

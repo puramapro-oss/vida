@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Sparkles, Leaf } from 'lucide-react'
+import { AIDisclosure } from '@/lib/legal'
+import { APP_NAME } from '@/lib/constants'
 
 interface Msg {
   role: 'user' | 'assistant'
@@ -102,6 +104,11 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] max-w-3xl mx-auto">
+      <AIDisclosure
+        appName={APP_NAME}
+        extra="Ne remplace pas un avis professionnel ou administratif officiel — vérifie toute information auprès des organismes concernés."
+        className="mb-2 shrink-0 rounded-xl border border-[var(--border)] bg-white/[0.02] px-3 py-2 text-xs text-[var(--text-muted)]"
+      />
       {messages.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
           <div className="h-16 w-16 rounded-3xl bg-gradient-to-br from-[var(--emerald)]/30 to-[var(--sage)]/10 flex items-center justify-center mb-6">

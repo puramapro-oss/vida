@@ -16,6 +16,10 @@
     {
       "path": "/api/cron/sync-legifrance",
       "schedule": "0 3 * * 0"
+    },
+    {
+      "path": "/api/cron/account-deletion",
+      "schedule": "0 3 * * *"
     }
   ]
 }

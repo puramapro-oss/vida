@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { User, Bell, Shield, Palette, CreditCard, Database, LogOut, X, Check, Globe } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase'
@@ -51,9 +52,11 @@ interface Payment {
 }
 
 export default function SettingsPage() {
+  const router = useRouter()
   const { user, profile, signOut, refetch } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('profile')
   const [saving, setSaving] = useState(false)
+  const [exportingData, setExportingData] = useState(false)
   const [profileForm, setProfileForm] = useState({
     full_name: '',
     pseudo: '',
@@ -71,7 +74,7 @@ export default function SettingsPage() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [payments, setPayments] = useState<Payment[]>([])
   const [loadingPayments, setLoadingPayments] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<'history' | 'account' | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<'history' | null>(null)
 
   const supabase = createClient()
 
@@ -163,6 +166,28 @@ export default function SettingsPage() {
       })
       .eq('id', user.id)
     toast.success('Couleur sauvegardee !')
+  }
+
+  const handleExportData = async () => {
+    setExportingData(true)
+    try {
+      const res = await fetch('/api/legal/my-data')
+      if (!res.ok) throw new Error(`Export impossible (${res.status})`)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'vida-mes-donnees.json'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      toast.success('Export téléchargé.')
+    } catch {
+      toast.error("L'export a échoué, réessaie plus tard.")
+    } finally {
+      setExportingData(false)
+    }
   }
 
   const handleDeleteHistory = async () => {
@@ -406,7 +431,7 @@ export default function SettingsPage() {
                 </p>
                 <Button
                   variant="danger"
-                  onClick={() => setShowDeleteConfirm('account')}
+                  onClick={() => router.push('/dashboard/ma-memoire')}
                   data-testid="delete-account-btn"
                 >
                   Supprimer mon compte
@@ -584,7 +609,8 @@ export default function SettingsPage() {
                 </p>
                 <Button
                   variant="secondary"
-                  onClick={() => toast.success('Export en cours — tu recevras un email sous 24h')}
+                  onClick={handleExportData}
+                  loading={exportingData}
                   data-testid="export-data-btn"
                 >
                   Exporter mes donnees
@@ -610,14 +636,15 @@ export default function SettingsPage() {
               <Card className="p-6 border border-red-500/20">
                 <h2 className="mb-2 font-semibold text-red-400">Supprimer mon compte</h2>
                 <p className="mb-4 text-sm text-[var(--text-secondary)]">
-                  Pour supprimer ton compte, contacte notre support.
+                  Consulte tes donnees, exporte-les et programme la suppression definitive de ton compte
+                  (periode de grace 30 jours, annulable a tout moment).
                 </p>
                 <Button
                   variant="danger"
-                  onClick={() => setShowDeleteConfirm('account')}
+                  onClick={() => router.push('/dashboard/ma-memoire')}
                   data-testid="delete-account-data-btn"
                 >
-                  Supprimer mon compte
+                  Gerer / supprimer mon compte
                 </Button>
               </Card>
             </div>
@@ -646,41 +673,25 @@ export default function SettingsPage() {
         >
           <Card className="w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-[var(--text-primary)]">
-                {showDeleteConfirm === 'history' ? 'Supprimer l\'historique ?' : 'Supprimer le compte ?'}
-              </h2>
+              <h2 className="font-bold text-[var(--text-primary)]">Supprimer l&apos;historique ?</h2>
               <button onClick={() => setShowDeleteConfirm(null)}>
                 <X className="h-4 w-4 text-[var(--text-muted)]" />
               </button>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-4">
-              {showDeleteConfirm === 'history'
-                ? 'Toutes tes conversations seront supprimees definitivement.'
-                : 'Pour supprimer ton compte, contacte matiss.frasne@gmail.com'}
+              Toutes tes conversations seront supprimees definitivement.
             </p>
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" onClick={() => setShowDeleteConfirm(null)}>
                 Annuler
               </Button>
-              {showDeleteConfirm === 'history' ? (
-                <Button
-                  variant="danger"
-                  onClick={handleDeleteHistory}
-                  data-testid="confirm-delete-history"
-                >
-                  Supprimer
-                </Button>
-              ) : (
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    window.location.href = 'mailto:matiss.frasne@gmail.com?subject=Suppression compte VIDA'
-                    setShowDeleteConfirm(null)
-                  }}
-                >
-                  Contacter le support
-                </Button>
-              )}
+              <Button
+                variant="danger"
+                onClick={handleDeleteHistory}
+                data-testid="confirm-delete-history"
+              >
+                Supprimer
+              </Button>
             </div>
           </Card>
         </div>
