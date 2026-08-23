@@ -4,101 +4,21 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Leaf, Users, Heart, Home, Briefcase, Baby,
-  Accessibility, GraduationCap, UserCheck, MapPin,
-  ArrowRight, ArrowLeft, Check, Download, ExternalLink, Sparkles,
+  Leaf, ArrowRight, ArrowLeft, Check, Download, ExternalLink,
   Euro, TrendingUp, ChevronDown, ChevronUp, Calculator, BookOpen,
 } from 'lucide-react'
-import { jsPDF } from 'jspdf'
 import { useAuth } from '@/hooks/useAuth'
 import FinancerDisclaimer from '@/components/shared/FinancerDisclaimer'
-
-type SituationTag =
-  | 'etudiant' | 'demandeur_emploi' | 'salarie' | 'independant' | 'retraite'
-  | 'parent' | 'famille_monoparentale' | 'handicape' | 'senior' | 'jeune'
-  | 'locataire' | 'proprietaire' | 'zfrr'
-
-interface Aide {
-  id: string
-  slug: string
-  nom: string
-  type_aide: string
-  organisme: string
-  profil_eligible: SituationTag[]
-  montant_max: number
-  periodicite: 'mensuelle' | 'annuelle' | 'ponctuelle'
-  url_officielle: string
-  description: string
-  cumulable: boolean
-  // Optional OpenFisca-enriched fields (present when /api/aides/search used)
-  montant_affiche?: number
-  montant_simule?: number | null
-  source_montant?: 'openfisca' | 'estimatif'
-  openfisca_variable?: string | null
-  legifrance_refs?: string[]
-  simulation_possible?: boolean
-}
-
-const SITUATIONS: { tag: SituationTag; label: string; icon: typeof Users; hint: string }[] = [
-  { tag: 'demandeur_emploi', label: 'Demandeur d\'emploi', icon: Briefcase, hint: 'Inscrit Pôle Emploi / fin de contrat' },
-  { tag: 'salarie', label: 'Salarié', icon: UserCheck, hint: 'CDI, CDD, intérim' },
-  { tag: 'independant', label: 'Indépendant', icon: Briefcase, hint: 'Micro-entrepreneur, freelance, TNS' },
-  { tag: 'etudiant', label: 'Étudiant', icon: GraduationCap, hint: 'Bac+1 et plus' },
-  { tag: 'jeune', label: 'Jeune (16-29 ans)', icon: Sparkles, hint: 'Peu importe le statut' },
-  { tag: 'retraite', label: 'Retraité', icon: Heart, hint: 'Régime général / privé / public' },
-  { tag: 'senior', label: 'Senior (60+)', icon: Heart, hint: 'Perte d\'autonomie ou préparation' },
-  { tag: 'parent', label: 'Parent', icon: Baby, hint: '1 enfant ou plus à charge' },
-  { tag: 'famille_monoparentale', label: 'Parent isolé', icon: Baby, hint: 'Sans conjoint·e' },
-  { tag: 'handicape', label: 'Handicap', icon: Accessibility, hint: 'Taux ≥50% (RQTH, MDPH)' },
-  { tag: 'locataire', label: 'Locataire', icon: Home, hint: 'Privé, social, résidence' },
-  { tag: 'proprietaire', label: 'Propriétaire', icon: Home, hint: 'Résidence principale' },
-  { tag: 'zfrr', label: 'Zone Ruralité (ZFRR)', icon: MapPin, hint: 'Commune en Zone France Ruralité Revitalisation' },
-]
-
-const REGIONS: { value: string; label: string }[] = [
-  { value: '',                       label: 'Non précisée' },
-  { value: 'ile-de-france',          label: 'Île-de-France' },
-  { value: 'auvergne-rhone-alpes',   label: 'Auvergne-Rhône-Alpes' },
-  { value: 'nouvelle-aquitaine',     label: 'Nouvelle-Aquitaine' },
-  { value: 'occitanie',              label: 'Occitanie' },
-  { value: 'hauts-de-france',        label: 'Hauts-de-France' },
-  { value: 'grand-est',              label: 'Grand Est' },
-  { value: 'provence-alpes-cote-d-azur', label: 'PACA' },
-  { value: 'pays-de-la-loire',       label: 'Pays de la Loire' },
-  { value: 'bretagne',               label: 'Bretagne' },
-  { value: 'normandie',              label: 'Normandie' },
-  { value: 'bourgogne-franche-comte', label: 'Bourgogne-Franche-Comté' },
-  { value: 'centre-val-de-loire',    label: 'Centre-Val de Loire' },
-  { value: 'corse',                  label: 'Corse' },
-  { value: 'outre-mer',              label: 'Outre-mer' },
-]
-
-const TYPE_COLORS: Record<string, string> = {
-  revenu: 'from-emerald-500/20 to-emerald-400/5',
-  logement: 'from-sky-500/20 to-sky-400/5',
-  sante: 'from-rose-500/20 to-rose-400/5',
-  handicap: 'from-violet-500/20 to-violet-400/5',
-  famille: 'from-amber-500/20 to-amber-400/5',
-  jeune: 'from-pink-500/20 to-pink-400/5',
-  emploi: 'from-indigo-500/20 to-indigo-400/5',
-  energie: 'from-lime-500/20 to-lime-400/5',
-  senior: 'from-teal-500/20 to-teal-400/5',
-  fiscal: 'from-yellow-500/20 to-yellow-400/5',
-  transport: 'from-orange-500/20 to-orange-400/5',
-}
-
-function formatMontant(a: Aide): string {
-  const montant = a.montant_affiche ?? a.montant_max
-  if (montant === 0) return 'Avantage en nature'
-  const suf = a.periodicite === 'mensuelle' ? '/an (en cumulé)' : a.periodicite === 'annuelle' ? '/an' : 'en une fois'
-  const prefix = a.source_montant === 'openfisca' ? '' : 'jusqu\'à '
-  return `${prefix}${montant.toLocaleString('fr-FR')}€ ${suf}`
-}
-
-function legifranceSearchUrl(ref: string): string {
-  // "Art. L262-1 Code de l'action sociale et des familles" → search Legifrance
-  return `https://www.legifrance.gouv.fr/search/code?query=${encodeURIComponent(ref)}`
-}
+import {
+  type SituationTag,
+  type Aide,
+  SITUATIONS,
+  REGIONS,
+  TYPE_COLORS,
+  formatMontant,
+  legifranceSearchUrl,
+} from './utils'
+import { generatePDF } from './pdf'
 
 export default function FinancerPage() {
   const { user } = useAuth()
@@ -189,91 +109,8 @@ export default function FinancerPage() {
     }
   }
 
-  const generatePDF = () => {
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' })
-    const pageW = doc.internal.pageSize.getWidth()
-    const margin = 48
-    let y = margin
-
-    doc.setFillColor(16, 185, 129)
-    doc.rect(0, 0, pageW, 80, 'F')
-    doc.setTextColor(255, 255, 255)
-    doc.setFontSize(22)
-    doc.setFont('helvetica', 'bold')
-    doc.text('VIDA — Dossier de financement', margin, 50)
-
-    y = 120
-    doc.setTextColor(30, 30, 30)
-    doc.setFontSize(11)
-    doc.setFont('helvetica', 'normal')
-    doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, margin, y)
-    y += 20
-    doc.text(`Situation : ${situation.join(', ')}`, margin, y)
-    y += 20
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(16, 185, 129)
-    doc.text(`Cumul estimé : jusqu'à ${cumul.toLocaleString('fr-FR')} € par an`, margin, y)
-    y += 18
-    if (simulationOk) {
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(9)
-      doc.setTextColor(16, 185, 129)
-      doc.text('Montants calculés via OpenFisca — api.openfisca.fr', margin, y)
-      y += 14
-    }
-    y += 6
-
-    doc.setDrawColor(16, 185, 129)
-    doc.line(margin, y, pageW - margin, y)
-    y += 20
-
-    aides.forEach((a, i) => {
-      if (y > 700) { doc.addPage(); y = margin }
-      doc.setTextColor(30, 30, 30)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(12)
-      doc.text(`${i + 1}. ${a.nom}`, margin, y)
-      y += 16
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(10)
-      doc.setTextColor(80, 80, 80)
-      const sourceLabel = a.source_montant === 'openfisca' ? ' [OpenFisca]' : ''
-      doc.text(`Organisme : ${a.organisme}  ·  ${formatMontant(a)}${sourceLabel}`, margin, y)
-      y += 14
-      const desc = doc.splitTextToSize(a.description, pageW - margin * 2)
-      doc.text(desc, margin, y)
-      y += desc.length * 12 + 4
-
-      // Refs Legifrance dans le PDF
-      const refs = a.legifrance_refs ?? []
-      if (refs.length > 0) {
-        doc.setFontSize(9)
-        doc.setTextColor(120, 120, 120)
-        doc.text('Base légale :', margin, y)
-        y += 11
-        refs.forEach(ref => {
-          if (y > 780) { doc.addPage(); y = margin }
-          const refLines = doc.splitTextToSize(`  · ${ref}`, pageW - margin * 2 - 10)
-          doc.text(refLines, margin, y)
-          y += refLines.length * 10
-        })
-        y += 4
-        doc.setFontSize(10)
-      }
-
-      doc.setTextColor(16, 185, 129)
-      doc.textWithLink('→ Faire la demande officielle', margin, y, { url: a.url_officielle })
-      y += 22
-    })
-
-    if (y > 700) { doc.addPage(); y = margin }
-    doc.setTextColor(120, 120, 120)
-    doc.setFontSize(9)
-    doc.text('Ces montants sont estimatifs et soumis à conditions. VIDA n\'est pas un organisme social.', margin, y + 20)
-    doc.text('Vérifie ton éligibilité sur chaque site officiel. SASU PURAMA · Frasne (25560).', margin, y + 34)
-
-    doc.save(`VIDA-financement-${new Date().toISOString().slice(0, 10)}.pdf`)
-    setStep(4)
+  const handleGeneratePDF = () => {
+    generatePDF(aides, situation, cumul, simulationOk, () => setStep(4))
   }
 
   return (
@@ -660,7 +497,7 @@ export default function FinancerPage() {
                     Revoir mes aides
                   </button>
                   <button
-                    onClick={generatePDF}
+                    onClick={handleGeneratePDF}
                     data-testid="financer-download-pdf"
                     className="rounded-2xl bg-gradient-to-r from-[var(--emerald)] to-[var(--sage)] px-8 py-3.5 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:-translate-y-0.5 transition-all inline-flex items-center justify-center gap-2"
                   >

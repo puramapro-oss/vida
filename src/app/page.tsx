@@ -1,31 +1,27 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
 const CinematicIntro = dynamic(() => import('@/components/shared/CinematicIntro'), { ssr: false })
 const BreathOverlay = dynamic(() => import('@/components/shared/BreathOverlay'), { ssr: false })
-import AnimatedCounter from '@/components/ui/AnimatedCounter'
 import {
-  Leaf,
   Heart,
   Sparkles,
   ArrowRight,
-  Menu,
-  X,
-  Globe,
   Users,
   Check,
-  Footprints,
-  HandHeart,
-  Wind,
-  BookHeart,
-  MapPin,
-  Trophy,
   Shield,
   Zap,
+  Wind,
+  Leaf,
 } from 'lucide-react'
+import Nav from './landing/Nav'
+import HeroParallax from './landing/HeroParallax'
+import ImpactSection from './landing/ImpactSection'
+import { PILIERS, ACTIONS, COMMENT, FAQ } from './landing/constants'
+import { fadeUp, slideInLeft, slideInRight, staggerParent } from './landing/animations'
 
 function Nav() {
   const [scrolled, setScrolled] = useState(false)
