@@ -2,45 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { getStripe } from '@/lib/stripe'
 import { createServiceClient } from '@/lib/supabase'
-import { ASSO_PERCENTAGE, REWARD_POOL_PERCENTAGE } from '@/lib/constants'
+import { updateProfileByCustomer, updateProfileById } from '@/lib/stripe-fulfillment-helpers'
+import { handleCheckoutSessionCompleted } from '@/lib/stripe-handlers/checkout-session-completed'
+import { handleInvoicePaymentSucceeded } from '@/lib/stripe-handlers/invoice-payment-succeeded'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-async function updateProfileByCustomer(customerId: string, data: Record<string, unknown>) {
-  const db = createServiceClient()
-  await db.from('profiles').update(data).eq('stripe_customer_id', customerId)
-}
-
-async function updateProfileById(userId: string, data: Record<string, unknown>) {
-  const db = createServiceClient()
-  await db.from('profiles').update(data).eq('id', userId)
-}
-
-async function distributeToPool(poolType: 'reward' | 'asso', amountCents: number, reason: string, referenceId: string) {
-  const db = createServiceClient()
-  const { data: pool } = await db
-    .from('pool_balances')
-    .select('balance_cents, total_in_cents')
-    .eq('pool_type', poolType)
-    .single()
-
-  const newBalance = (pool?.balance_cents ?? 0) + amountCents
-  const newTotalIn = (pool?.total_in_cents ?? 0) + amountCents
-
-  await db
-    .from('pool_balances')
-    .update({ balance_cents: newBalance, total_in_cents: newTotalIn, updated_at: new Date().toISOString() })
-    .eq('pool_type', poolType)
-
-  await db.from('pool_transactions').insert({
-    pool_type: poolType,
-    amount_cents: amountCents,
-    direction: 'in',
-    reason,
-    reference_id: referenceId,
-  })
-}
 
 export async function POST(req: NextRequest) {
   // Auth 1: internal secret (from karma dispatcher)
@@ -84,96 +51,7 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        const customerId = session.customer as string
-        const subscriptionId = session.subscription as string
-        const userId = session.metadata?.user_id
-        const period = (session.metadata?.period as 'month' | 'year' | undefined) ?? 'month'
-
-        const updateData = {
-          stripe_customer_id: customerId,
-          stripe_subscription_id: subscriptionId,
-          plan: 'premium' as const,
-          plan_period: period,
-          subscription_status: 'trialing' as const,
-          subscription_started_at: new Date().toISOString(),
-          trial_ends_at: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString(),
-        }
-
-        if (userId) {
-          await updateProfileById(userId, updateData)
-        } else if (customerId) {
-          await updateProfileByCustomer(customerId, updateData)
-        }
-
-        // V7 §15 — cross-promo conversion tracking
-        const crossPromoSource = session.metadata?.cross_promo_source
-        const crossPromoCoupon = session.metadata?.coupon
-        if (userId && crossPromoSource && crossPromoCoupon) {
-          try {
-            const { data: existing } = await db
-              .from('cross_promos')
-              .select('id')
-              .eq('source_app', crossPromoSource)
-              .eq('user_id', userId)
-              .eq('converted', false)
-              .order('clicked_at', { ascending: false })
-              .limit(1)
-              .maybeSingle()
-
-            const now = new Date().toISOString()
-            if (existing?.id) {
-              await db.from('cross_promos').update({
-                converted: true,
-                converted_at: now,
-                coupon_used: crossPromoCoupon,
-                session_id: session.id,
-              }).eq('id', existing.id)
-            } else {
-              await db.from('cross_promos').insert({
-                source_app: crossPromoSource,
-                target_app: 'vida',
-                user_id: userId,
-                coupon_used: crossPromoCoupon,
-                session_id: session.id,
-                converted: true,
-                converted_at: now,
-              })
-            }
-          } catch {
-            // non-blocking
-          }
-        }
-
-        // V6 §10 — Prime tranches (phase1: J+0 25€, M+1 25€, M+2 50€)
-        if (userId && subscriptionId) {
-          const { data: subRow } = await db
-            .from('subscriptions')
-            .select('id')
-            .eq('stripe_subscription_id', subscriptionId)
-            .maybeSingle()
-
-          const now = new Date()
-          const tranches = [
-            { tranche: 1, amount_cents: 2500, scheduled_for: now.toISOString() },
-            { tranche: 2, amount_cents: 2500, scheduled_for: new Date(now.getTime() + 30 * 86400000).toISOString() },
-            { tranche: 3, amount_cents: 5000, scheduled_for: new Date(now.getTime() + 60 * 86400000).toISOString() },
-          ]
-          await db.from('prime_payouts').upsert(
-            tranches.map(t => ({ user_id: userId, subscription_id: subRow?.id ?? null, ...t })),
-            { onConflict: 'user_id,subscription_id,tranche' }
-          )
-
-          // Credit tranche 1 immediately to wallet (points mode: 1pt=0.01€ → 2500 points for 25€)
-          const { data: wallet } = await db.from('wallets').select('balance_cents, balance_points').eq('user_id', userId).maybeSingle()
-          if (wallet) {
-            await db.from('wallets').update({
-              balance_cents: (wallet.balance_cents ?? 0) + 2500,
-              balance_points: (wallet.balance_points ?? 0) + 2500,
-            }).eq('user_id', userId)
-          }
-          await db.from('prime_payouts').update({ paid: true, paid_at: now.toISOString() })
-            .eq('user_id', userId).eq('tranche', 1)
-        }
+        await handleCheckoutSessionCompleted(session, db)
         break
       }
 
@@ -224,88 +102,7 @@ export async function POST(req: NextRequest) {
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice
-        const customerId = invoice.customer as string
-        const amountCents = invoice.amount_paid ?? 0
-
-        const { data: profile } = await db
-          .from('profiles')
-          .select('id')
-          .eq('stripe_customer_id', customerId)
-          .single()
-
-        if (profile?.id) {
-          await db.from('transactions').insert({
-            user_id: profile.id,
-            type: 'subscription',
-            direction: 'in',
-            amount_cents: amountCents,
-            currency: invoice.currency?.toUpperCase() ?? 'EUR',
-            status: 'succeeded',
-            stripe_invoice_id: invoice.id,
-          })
-
-          // Distribute to pools: 10% reward, 10% asso
-          const rewardCents = Math.floor(amountCents * REWARD_POOL_PERCENTAGE / 100)
-          const assoCents = Math.floor(amountCents * ASSO_PERCENTAGE / 100)
-          await distributeToPool('reward', rewardCents, 'ca_10pct', invoice.id ?? '')
-          await distributeToPool('asso', assoCents, 'ca_10pct', invoice.id ?? '')
-
-          // Commission de parrainage — taux déjà résolus par ligne (schéma
-          // referrals.first_payment_commission_rate=0.50/recurring_commission_rate=0.10,
-          // pas inventés ici). status='pending' = pas encore de commission versée →
-          // ce paiement est le 1er ; sinon récurrent.
-          const { data: referral } = await db
-            .from('referrals')
-            .select('id, referrer_id, status, first_payment_commission_rate, recurring_commission_rate')
-            .eq('referred_id', profile.id)
-            .maybeSingle()
-
-          if (referral && referral.status !== 'churned') {
-            const isFirst = referral.status === 'pending'
-            const rate = Number(isFirst ? referral.first_payment_commission_rate : referral.recurring_commission_rate)
-            const commissionCents = Math.floor(amountCents * rate)
-
-            if (commissionCents > 0) {
-              if (isFirst) {
-                // Verrou atomique anti double-crédit : seule la requête qui bascule
-                // pending→active insère la commission 1er paiement.
-                const { data: activated } = await db
-                  .from('referrals')
-                  .update({
-                    status: 'active',
-                    activated_at: new Date().toISOString(),
-                    first_payment_commission_cents: commissionCents,
-                  })
-                  .eq('id', referral.id)
-                  .eq('status', 'pending')
-                  .select('id')
-                  .maybeSingle()
-
-                if (activated) {
-                  await db.from('referral_earnings').insert({
-                    referral_id: referral.id,
-                    referrer_id: referral.referrer_id,
-                    amount_cents: commissionCents,
-                    source: 'first_payment',
-                    paid: false,
-                  })
-                }
-              } else {
-                // Récurrent : protégé par l'idempotence globale sur event.id
-                // (insert stripe_events en tête de handler) — un même paiement
-                // Stripe n'atteint jamais ce code 2 fois.
-                await db.from('referral_earnings').insert({
-                  referral_id: referral.id,
-                  referrer_id: referral.referrer_id,
-                  amount_cents: commissionCents,
-                  source: 'recurring',
-                  period: new Date().toISOString().slice(0, 10),
-                  paid: false,
-                })
-              }
-            }
-          }
-        }
+        await handleInvoicePaymentSucceeded(invoice, db)
         break
       }
 
