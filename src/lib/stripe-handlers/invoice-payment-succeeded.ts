@@ -1,11 +1,11 @@
 import type Stripe from 'stripe'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { distributeToPool } from '../stripe-fulfillment-helpers'
 import { ASSO_PERCENTAGE, REWARD_POOL_PERCENTAGE } from '../constants'
+import { createServiceClient } from '../supabase'
 
 export async function handleInvoicePaymentSucceeded(
   invoice: Stripe.Invoice,
-  db: SupabaseClient<any, any, any>
+  db: ReturnType<typeof createServiceClient>
 ) {
   const customerId = invoice.customer as string
   const amountCents = invoice.amount_paid ?? 0

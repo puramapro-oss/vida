@@ -1,10 +1,10 @@
 import type Stripe from 'stripe'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { updateProfileById, updateProfileByCustomer } from '../stripe-fulfillment-helpers'
+import { createServiceClient } from '../supabase'
 
 export async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
-  db: SupabaseClient<any, any, any>
+  db: ReturnType<typeof createServiceClient>
 ) {
   const customerId = session.customer as string
   const subscriptionId = session.subscription as string
