@@ -48,9 +48,9 @@ export function isUpstashConfigured(): boolean {
 }
 
 async function l0Get(cid: string): Promise<LegifranceArticle | null> {
-  const redis = getRedis()
-  if (!redis) return null
   try {
+    const redis = getRedis()
+    if (!redis) return null
     const cached = await redis.get<LegifranceArticle>(`${KEY_PREFIX}:article:${cid}`)
     return cached ?? null
   } catch {
@@ -59,9 +59,9 @@ async function l0Get(cid: string): Promise<LegifranceArticle | null> {
 }
 
 async function l0Set(article: LegifranceArticle): Promise<void> {
-  const redis = getRedis()
-  if (!redis) return
   try {
+    const redis = getRedis()
+    if (!redis) return
     await redis.set(`${KEY_PREFIX}:article:${article.cid}`, article, { ex: CACHE_TTL_S })
   } catch {
     // Cache miss-on-set : pas bloquant
@@ -177,27 +177,36 @@ function l5GetFromStatic(cid: string): LegifranceArticle | null {
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Récupère un article en descendant les couches : L0 → L1 → L3 PISTE → L5 static.
+ * Recherche d’abord dans les caches. Les identifiants locaux viennent du catalogue
+ * embarqué ; les identifiants officiels restants sont consultés via PISTE.
  * Si trouvé dans L3, promeut automatiquement en L1 + L0 pour les appels suivants.
  */
 export async function getArticle(cid: string): Promise<LegifranceArticle | null> {
+  if (process.env.LEGIFRANCE_FORCE_FALLBACK === 'static') return l5GetFromStatic(cid)
+
   const l0 = await l0Get(cid)
   if (l0) return l0
 
-  const l1 = await l1GetByCid(cid)
+  // Le client Supabase peut être indisponible avant même la construction de la requête.
+  const l1 = await l1GetByCid(cid).catch(() => null)
   if (l1) {
     await l0Set(l1)
     return l1
   }
 
+  // Les identifiants du catalogue embarqué sont propres à VIDA.
+  const bundled = l5GetFromStatic(cid)
+  if (bundled) return bundled
+
   const l3 = await l3GetFromPiste(cid)
   if (l3) {
-    await l1Upsert(l3)
+    // L’article obtenu reste disponible si sa mise en cache échoue.
+    await l1Upsert(l3).catch(() => undefined)
     await l0Set(l3)
     return l3
   }
 
-  return l5GetFromStatic(cid)
+  return null
 }
 
 /**
@@ -210,19 +219,12 @@ export async function searchArticles(params: SearchParams): Promise<LegifranceSe
   const { query, topK = 5 } = params
   if (!query || query.trim().length < 3) return []
 
-  if (process.env.LEGIFRANCE_FORCE_FALLBACK === 'static') {
-    return searchStatic(query, topK).map((article: LegifranceArticle, idx: number) => ({
-      article,
-      score: 1 - idx * 0.1,
-      source: 'static' as const,
-    }))
+  if (process.env.LEGIFRANCE_FORCE_FALLBACK !== 'static') {
+    const l1Results = await l1Search(params).catch(() => [])
+    if (l1Results.length > 0) return l1Results
   }
 
-  const l1Results = await l1Search(params)
-  if (l1Results.length > 0) return l1Results
-
-  // Fallback static si Postgres vide
-  return searchStatic(query, topK).map((article, idx) => ({
+  return searchStatic(query, topK, params.codes).map((article, idx) => ({
     article,
     score: 1 - idx * 0.1,
     source: 'static' as const,
