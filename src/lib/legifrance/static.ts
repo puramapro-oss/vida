@@ -183,13 +183,14 @@ export const LAW_CONTEXT_STATIC: LegifranceArticle[] = [
 ]
 
 /** Recherche naïve par mots-clés dans le fallback static. */
-export function searchStatic(query: string, topK = 5): LegifranceArticle[] {
+export function searchStatic(query: string, topK = 5, codes?: readonly string[]): LegifranceArticle[] {
   const tokens = query
     .toLowerCase()
     .split(/[\s,.'—–-]+/)
     .filter((t) => t.length >= 3)
 
-  const scored = LAW_CONTEXT_STATIC.map((article) => {
+  const articles = codes?.length ? LAW_CONTEXT_STATIC.filter((article) => codes.includes(article.code)) : LAW_CONTEXT_STATIC
+  const scored = articles.map((article) => {
     const haystack = (article.numero + ' ' + article.titre + ' ' + article.texte).toLowerCase()
     const score = tokens.reduce((acc, t) => acc + (haystack.includes(t) ? 1 : 0), 0)
     return { article, score }

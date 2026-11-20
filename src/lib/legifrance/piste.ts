@@ -147,6 +147,15 @@ export async function getArticleByCid(
   knownCodeId?: string,
   knownCodeName?: string,
 ): Promise<LegifranceArticle | null> {
+  return readPisteArticle(cid, knownCodeId, knownCodeName)
+}
+
+async function readPisteArticle(
+  requestedId: string,
+  knownCodeId?: string,
+  knownCodeName?: string,
+  lookup: 'cid' | 'version' = 'cid',
+): Promise<LegifranceArticle | null> {
   interface PisteArticleResponse {
     article?: {
       id: string
@@ -165,10 +174,13 @@ export async function getArticleByCid(
     }
   }
 
-  const data = await pisteRequest<PisteArticleResponse>('/consult/getArticle', { id: cid })
+  const data = await pisteRequest<PisteArticleResponse>('/consult/getArticle', { id: requestedId })
   if (!data.article) return null
 
   const a = data.article
+  if (lookup === 'version' && a.id !== requestedId) {
+    throw new LegifranceError('La version de l’article renvoyée par PISTE diffère de la version demandée.', 'piste', true)
+  }
   const resolvedCid = a.cid || a.id
 
   // Code LEGITEXT non renvoyé directement par getArticle — utiliser le code
@@ -191,7 +203,7 @@ export async function getArticleByCid(
     date_debut: a.dateDebut ? new Date(a.dateDebut).toISOString() : null,
     date_fin: isStillInForce ? null : new Date(dateFinMs!).toISOString(),
     etat: normalizeEtat(a.etat),
-    url_legifrance: `https://www.legifrance.gouv.fr/codes/article_lc/${resolvedCid}`,
+    url_legifrance: `https://www.legifrance.gouv.fr/codes/article_lc/${lookup === 'version' ? a.id : resolvedCid}`,
     version_num: 1,
     last_synced_at: new Date().toISOString(),
   }
@@ -213,60 +225,81 @@ function stripHtml(html: string): string {
 }
 
 /**
- * Recherche plein-texte dans Legifrance.
- * Endpoint : /search (fond=CODE_DATE ou CODE_ETAT selon contexte).
+ * Recherche plein-texte dans le code à la date du jour (FAQ API Légifrance, § 7.2).
  */
 export async function searchInCode(
   codeId: string,
   query: string,
   pageSize = 10,
 ): Promise<LegifranceArticle[]> {
-  interface PisteSearchResponse {
-    results?: Array<{
-      titles?: Array<{ id: string; title?: string; cid?: string }>
-      sections?: Array<{ id: string }>
-    }>
-    totalResultNumber?: number
+  const limit = Math.min(Math.trunc(pageSize), 100)
+  const term = query.trim()
+  if (!/^LEGITEXT\d{12}$/.test(codeId) || !term || !Number.isFinite(pageSize) || limit < 1) return []
+
+  const date = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date())
+
+  // NOM_CODE attend un libellé. Le retrouver par CID et pour le même jour que la recherche.
+  const metadata = await pisteRequest<{ title: { cid: string; title: string } | null }>(
+    '/search/nearestVersion', { cidText: codeId, date },
+  )
+  if (metadata?.title === null) return []
+  if (metadata?.title?.cid !== codeId || typeof metadata.title.title !== 'string' || !metadata.title.title.trim()) {
+    throw new LegifranceError('Identité ou titre du code incohérent dans la réponse PISTE.', 'piste', true)
   }
+  const codeName = metadata.title.title.trim()
 
   const payload = {
     recherche: {
       champs: [
         {
-          typeChamp: 'ALL',
+          typeChamp: 'ARTICLE',
           criteres: [
-            { typeRecherche: 'UN_DES_MOTS', valeur: query, operateur: 'ET' },
+            { typeRecherche: 'UN_DES_MOTS', valeur: term, operateur: 'ET' },
           ],
           operateur: 'ET',
         },
       ],
-      filtres: [{ facette: 'CODE_ID', valeurs: [codeId] }],
+      filtres: [
+        { facette: 'NOM_CODE', valeurs: [codeName] },
+        { facette: 'DATE_VERSION', singleDate: date },
+      ],
+      operateur: 'ET',
       pageNumber: 1,
-      pageSize,
+      pageSize: limit,
       sort: 'PERTINENCE',
-      typePagination: 'ARTICLE',
+      typePagination: 'DEFAUT',
     },
     fond: 'CODE_DATE',
   }
 
-  const data = await pisteRequest<PisteSearchResponse>('/search', payload)
-  if (!data.results) return []
-
-  // PISTE renvoie des IDs d'articles — fetch chaque article en parallèle
-  const cids: string[] = []
-  for (const r of data.results) {
-    if (r.titles) {
-      for (const t of r.titles) {
-        if (t.cid) cids.push(t.cid)
-        else if (t.id) cids.push(t.id)
+  interface SearchResult {
+    titles?: { id?: string | null; cid?: string | null }[]
+    sections?: { extracts?: { id?: string }[] }[]
+  }
+  const data = await pisteRequest<{ results: SearchResult[] }>('/search', payload)
+  if (!Array.isArray(data?.results)) throw new LegifranceError('Résultats de recherche PISTE illisibles.', 'piste', true)
+  const versionIds = new Set<string>()
+  searchResults: for (const result of data.results) {
+    // Le champ id du titre peut porter un suffixe de date. Le cid reste l'identifiant du code.
+    if (!result.titles?.some(title => (title.cid ?? title.id) === codeId)) continue
+    for (const section of result.sections ?? []) {
+      for (const extract of section.extracts ?? []) {
+        if (extract.id && /^LEGIARTI\d{12}$/.test(extract.id)) versionIds.add(extract.id)
+        if (versionIds.size === limit) break searchResults
       }
     }
   }
 
-  const articles = await Promise.all(
-    cids.slice(0, pageSize).map((cid) => getArticleByCid(cid, codeId)),
-  )
-  return articles.filter((a): a is LegifranceArticle => a !== null)
+  const ids = [...versionIds]
+  const articles: LegifranceArticle[] = []
+  const batchSize = 5
+  for (let i = 0; i < ids.length; i += batchSize) {
+    const batch = await Promise.all(ids.slice(i, i + batchSize).map(id => readPisteArticle(id, codeId, codeName, 'version')))
+    for (const article of batch) if (article) articles.push(article)
+  }
+  return articles
 }
 
 /**
