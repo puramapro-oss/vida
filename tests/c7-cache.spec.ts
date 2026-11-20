@@ -60,6 +60,42 @@ test.describe('C7 F4 — cache layered', () => {
     }
   })
 
+  test('secours statique sur le code demandé avant la limite de résultats', async () => {
+    const before = process.env.LEGIFRANCE_FORCE_FALLBACK
+    process.env.LEGIFRANCE_FORCE_FALLBACK = 'static'
+    try {
+      const code = 'LEGITEXT000006073189'
+      const rows = await searchArticles({ query: 'allocation', topK: 1, codes: [code] })
+      expect(rows).toHaveLength(1)
+      expect(rows[0].source).toBe('static')
+      expect(rows[0].article.code).toBe(code)
+      expect(await searchArticles({ query: 'ARE chômage', codes: [code] })).toEqual([])
+    } finally {
+      if (before === undefined) delete process.env.LEGIFRANCE_FORCE_FALLBACK
+      else process.env.LEGIFRANCE_FORCE_FALLBACK = before
+    }
+  })
+
+  test('secours forcé par identifiant sans accès aux fournisseurs', async () => {
+    const before = process.env.LEGIFRANCE_FORCE_FALLBACK
+    const fetch = globalThis.fetch
+    let requests = 0
+    process.env.LEGIFRANCE_FORCE_FALLBACK = 'static'
+    globalThis.fetch = async () => {
+      requests++
+      throw new Error('Accès réseau inattendu')
+    }
+    try {
+      expect((await getArticle('STATIC_RSA_L262-1'))?.numero).toBe('L262-1')
+      expect(await getArticle('LEGIARTI000000000001')).toBeNull()
+      expect(requests).toBe(0)
+    } finally {
+      globalThis.fetch = fetch
+      if (before === undefined) delete process.env.LEGIFRANCE_FORCE_FALLBACK
+      else process.env.LEGIFRANCE_FORCE_FALLBACK = before
+    }
+  })
+
   test('getArticle chaîne : Postgres miss → PISTE skip (creds absents) → static lookup', async () => {
     // Aucun article réel en DB, PISTE non configuré → doit retourner static si cid match, sinon null
     const staticArticle = await getArticle('STATIC_RSA_L262-1')
