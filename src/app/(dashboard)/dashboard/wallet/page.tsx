@@ -2,19 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { Wallet, ArrowUpRight, ArrowDownRight, CreditCard, Clock, TrendingUp } from 'lucide-react'
-import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Skeleton from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
 import { formatDate } from '@/lib/utils'
-import { WALLET_MIN_WITHDRAWAL } from '@/lib/constants'
-
-// V7 §27 — Phase 1 = points only. Withdrawals live in Phase 2 (post-Treezor).
-const PURAMA_PHASE = (process.env.NEXT_PUBLIC_PURAMA_PHASE ?? '1') === '2' ? 2 : 1
-const WITHDRAWAL_AVAILABLE = process.env.NEXT_PUBLIC_WITHDRAWAL_AVAILABLE === 'true'
 
 interface WalletData {
   balance: number
@@ -31,63 +24,35 @@ interface Transaction {
 
 export default function WalletPage() {
   const { user } = useAuth()
+  return user ? <AccountWallet key={user.id} /> : <Skeleton className="h-8 w-48" />
+}
+
+function AccountWallet() {
   const [wallet, setWallet] = useState<WalletData | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
-  const [withdrawIban, setWithdrawIban] = useState('')
-  const [withdrawAmount, setWithdrawAmount] = useState('')
-  const [showWithdraw, setShowWithdraw] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const supabase = createClient()
+  const [unavailable, setUnavailable] = useState(false)
 
   useEffect(() => {
-    if (!user) return
-    const load = async () => {
-      const [wRes, tRes] = await Promise.all([
-        supabase.from('wallets').select('*').eq('user_id', user.id).single(),
-        supabase.from('wallet_transactions').select('*').order('created_at', { ascending: false }).limit(50),
-      ])
-      if (wRes.data) setWallet(wRes.data as WalletData)
-      if (tRes.data) setTransactions(tRes.data as Transaction[])
-      setLoading(false)
+    const controller = new AbortController()
+    async function load() {
+      try {
+        const response = await fetch('/api/wallet', { signal: controller.signal })
+        if (!response.ok) throw new Error('Portefeuille indisponible')
+        const result = await response.json()
+        if (controller.signal.aborted) return
+        setWallet({ balance: result.balance, total_earned: result.total_earned })
+        setTransactions(result.transactions)
+        setUnavailable(false)
+      } catch {
+        if (!controller.signal.aborted) setUnavailable(true)
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
     }
-    load()
-  }, [user, supabase])
-
-  const handleWithdraw = async () => {
-    if (PURAMA_PHASE === 1 || !WITHDRAWAL_AVAILABLE) {
-      toast.error('Retrait IBAN bientôt disponible — Purama Card en route.')
-      return
-    }
-    const amount = parseFloat(withdrawAmount)
-    if (!amount || amount < WALLET_MIN_WITHDRAWAL) {
-      toast.error(`Montant minimum : ${WALLET_MIN_WITHDRAWAL} EUR`)
-      return
-    }
-    if (!withdrawIban || withdrawIban.length < 15) {
-      toast.error('IBAN invalide')
-      return
-    }
-    if (!wallet || amount > wallet.balance) {
-      toast.error('Solde insuffisant')
-      return
-    }
-    setSubmitting(true)
-    const { error } = await supabase.from('withdrawals').insert({
-      user_id: user!.id,
-      amount,
-      iban: withdrawIban,
-    })
-    setSubmitting(false)
-    if (error) {
-      toast.error('Erreur lors de la demande de retrait')
-      return
-    }
-    toast.success('Demande de retrait envoyee ! Virement sous 48h.')
-    setShowWithdraw(false)
-    setWithdrawAmount('')
-    setWithdrawIban('')
-  }
+    void load()
+    return () => controller.abort()
+  }, [])
 
   if (loading) {
     return (
@@ -98,6 +63,10 @@ export default function WalletPage() {
         </div>
       </div>
     )
+  }
+
+  if (unavailable) {
+    return <div role="status" className="p-6">Le relevé du portefeuille est indisponible.</div>
   }
 
   return (
@@ -136,57 +105,12 @@ export default function WalletPage() {
           </div>
         </Card>
         <Card className="p-6 flex flex-col items-center justify-center gap-2">
-          <Button
-            onClick={() => setShowWithdraw(!showWithdraw)}
-            icon={<CreditCard className="h-4 w-4" />}
-            disabled={PURAMA_PHASE === 1 || !WITHDRAWAL_AVAILABLE || !wallet || wallet.balance < WALLET_MIN_WITHDRAWAL}
-          >
-            {PURAMA_PHASE === 1 || !WITHDRAWAL_AVAILABLE
-              ? 'Retrait — bientôt disponible'
-              : `Retirer (min ${WALLET_MIN_WITHDRAWAL} EUR)`}
+          <Button disabled icon={<CreditCard className="h-4 w-4" />}>
+            Retrait bancaire indisponible
           </Button>
-          {PURAMA_PHASE === 1 && (
-            <p className="text-[10px] text-[var(--text-muted)] text-center max-w-[180px]">
-              Tes 100 € t&apos;attendent. La Purama Card arrive bientôt.
-            </p>
-          )}
+          <p className="text-center text-xs text-[var(--text-secondary)]">Les retraits seront disponibles en phase 2.</p>
         </Card>
       </div>
-
-      {/* Formulaire retrait */}
-      {showWithdraw && (
-        <Card className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-[var(--text-primary)]">Demande de retrait</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm text-[var(--text-secondary)]">Montant (EUR)</label>
-              <input
-                type="number"
-                min={WALLET_MIN_WITHDRAWAL}
-                max={wallet?.balance ?? 0}
-                step="0.01"
-                value={withdrawAmount}
-                onChange={e => setWithdrawAmount(e.target.value)}
-                className="w-full rounded-xl border border-[var(--border)] bg-white/5 px-4 py-2.5 text-[var(--text-primary)] outline-none focus:border-[var(--cyan)]"
-                placeholder={`Min ${WALLET_MIN_WITHDRAWAL} EUR`}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-[var(--text-secondary)]">IBAN</label>
-              <input
-                type="text"
-                value={withdrawIban}
-                onChange={e => setWithdrawIban(e.target.value.toUpperCase())}
-                className="w-full rounded-xl border border-[var(--border)] bg-white/5 px-4 py-2.5 text-[var(--text-primary)] outline-none focus:border-[var(--cyan)]"
-                placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX"
-              />
-            </div>
-            <Button onClick={handleWithdraw} loading={submitting}>
-              Confirmer le retrait
-            </Button>
-          </div>
-        </Card>
-      )}
 
       {/* Historique */}
       <Card className="p-6">

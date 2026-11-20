@@ -1,25 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { db: { schema: 'vida_sante' } }
-)
+export async function GET() {
+  const db = await createServerSupabaseClient()
+  const { data: { user } } = await db.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Non authentifie' }, { status: 401 })
 
-export async function GET(request: NextRequest) {
-  const userId = request.headers.get('x-user-id')
-  if (!userId) {
-    return NextResponse.json({ error: 'Non authentifie' }, { status: 401 })
+  const [referrals, earnings, profile] = await Promise.all([
+    db.from('referrals').select('*').eq('referrer_id', user.id).order('created_at', { ascending: false }),
+    db.from('referral_earnings').select('*').eq('referrer_id', user.id).order('created_at', { ascending: false }),
+    db.from('profiles').select('referral_code').eq('id', user.id).maybeSingle(),
+  ])
+  if (referrals.error || earnings.error || profile.error) {
+    return NextResponse.json({ error: 'Le parrainage est indisponible.' }, { status: 503 })
   }
 
-  const [{ data: referrals }, { data: commissions }, { data: profile }] = await Promise.all([
-    supabase.from('referrals').select('*').eq('referrer_id', userId).order('created_at', { ascending: false }),
-    supabase.from('commissions').select('*').eq('referrer_id', userId).order('created_at', { ascending: false }),
-    supabase.from('profiles').select('referral_code').eq('id', userId).single(),
-  ])
-
-  const totalReferrals = referrals?.length ?? 0
+  const totalReferrals = referrals.data.length
   let tier = 'debutant'
   if (totalReferrals >= 100) tier = 'legende'
   else if (totalReferrals >= 75) tier = 'diamant'
@@ -29,53 +25,35 @@ export async function GET(request: NextRequest) {
   else if (totalReferrals >= 5) tier = 'bronze'
 
   return NextResponse.json({
-    referral_code: profile?.referral_code,
+    referral_code: profile.data?.referral_code,
     total_referrals: totalReferrals,
     tier,
-    referrals: referrals ?? [],
-    commissions: commissions ?? [],
-    total_commissions: (commissions ?? []).reduce((sum, c) => sum + Number(c.amount), 0),
+    referrals: referrals.data,
+    commissions: earnings.data.map(earning => ({ ...earning, amount: earning.amount_cents / 100 })),
+    total_commissions: earnings.data.reduce((sum, earning) => sum + earning.amount_cents, 0) / 100,
   })
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const { referrer_code, referred_id } = await request.json()
-    if (!referrer_code || !referred_id) {
-      return NextResponse.json({ error: 'Parametres manquants' }, { status: 400 })
-    }
+  const db = await createServerSupabaseClient()
+  const { data: { user } } = await db.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Non authentifie' }, { status: 401 })
 
-    // Find referrer by code
-    const { data: referrer } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('referral_code', referrer_code)
-      .single()
+  const body = await request.json().catch(() => null)
+  if (typeof body?.referrer_code !== 'string' || !body.referrer_code.trim()) {
+    return NextResponse.json({ error: 'Code de parrainage requis.' }, { status: 400 })
+  }
+  if (body.referred_id != null && body.referred_id !== user.id) {
+    return NextResponse.json({ error: 'Ce parrainage concerne uniquement ton compte.' }, { status: 403 })
+  }
 
-    if (!referrer) {
-      return NextResponse.json({ error: 'Code de parrainage invalide' }, { status: 404 })
-    }
-
-    if (referrer.id === referred_id) {
-      return NextResponse.json({ error: 'Auto-parrainage interdit' }, { status: 400 })
-    }
-
-    // Create referral
-    const { error } = await supabase.from('referrals').insert({
-      referrer_id: referrer.id,
-      referred_id,
-      status: 'active',
-    })
-
-    if (error) {
-      if (error.code === '23505') {
-        return NextResponse.json({ error: 'Parrainage deja enregistre' }, { status: 409 })
-      }
-      return NextResponse.json({ error: 'Erreur lors de l enregistrement' }, { status: 500 })
-    }
-
-    return NextResponse.json({ success: true })
-  } catch {
-    return NextResponse.json({ error: 'Requete invalide' }, { status: 400 })
+  const { data, error } = await db.rpc('register_my_referral', { sponsor_code: body.referrer_code.trim() })
+  if (error) return NextResponse.json({ error: 'Le parrainage est indisponible.' }, { status: 503 })
+  switch (data) {
+    case 'created': return NextResponse.json({ success: true })
+    case 'already_registered': return NextResponse.json({ error: 'Parrainage deja enregistre' }, { status: 409 })
+    case 'self': return NextResponse.json({ error: 'Auto-parrainage interdit' }, { status: 400 })
+    case 'invalid_code': return NextResponse.json({ error: 'Code de parrainage invalide' }, { status: 404 })
+    default: return NextResponse.json({ error: 'Le parrainage est indisponible.' }, { status: 503 })
   }
 }

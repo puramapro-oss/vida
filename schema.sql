@@ -965,7 +965,7 @@ BEGIN
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='vida_sante' AND tablename='withdrawals' AND policyname='withdrawals_self') THEN
-    CREATE POLICY withdrawals_self ON vida_sante.withdrawals FOR ALL USING (auth.uid() = user_id);
+    CREATE POLICY withdrawals_self ON vida_sante.withdrawals FOR SELECT TO authenticated USING (auth.uid() = user_id);
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='vida_sante' AND tablename='pool_balances' AND policyname='pools_read') THEN
