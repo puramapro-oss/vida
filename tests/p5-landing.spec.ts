@@ -42,7 +42,7 @@ test.describe('P5 — Landing polish', () => {
     await expect(trigger).toBeVisible()
     await trigger.click()
 
-    const dialog = page.getByRole('dialog')
+    const dialog = page.getByRole('dialog', { name: /respiration guidée/i })
     await expect(dialog).toBeVisible()
     await expect(dialog.getByText(/respiration guidée/i)).toBeAttached() // sr-only h2
     // Close via Passer button
@@ -55,9 +55,10 @@ test.describe('P5 — Landing polish', () => {
     const trigger = page.getByRole('button', { name: /respire avec moi/i })
     await trigger.scrollIntoViewIfNeeded()
     await trigger.click()
-    await expect(page.getByRole('dialog')).toBeVisible()
+    const dialog = page.getByRole('dialog', { name: /respiration guidée/i })
+    await expect(dialog).toBeVisible()
     await page.keyboard.press('Escape')
-    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 2000 })
+    await expect(dialog).not.toBeVisible({ timeout: 2000 })
   })
 
   test('vida-nature-bg — présent sur landing', async ({ page }) => {
